@@ -15,10 +15,9 @@ public partial class App : System.Windows.Application
     Views.MainWindow? _dashboardWindow;
     AuthWindow? _currentAuthWindow;
 
-    protected override async void OnStartup(StartupEventArgs e)
+    protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-
 
         _singleInstanceMutex = new Mutex(true, MutexName, out var createdNew);
         if (!createdNew)
@@ -41,6 +40,7 @@ public partial class App : System.Windows.Application
 
         // Create and show Main Window
         _dashboardWindow = new Views.MainWindow();
+        MainWindow = _dashboardWindow;
         _dashboardWindow.Show();
     }
 
