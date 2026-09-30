@@ -131,101 +131,163 @@ public static class Win32
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern bool CloseHandle(IntPtr hObject);
 
-    [DllImport("user32.dll", SetLastError = true)]
-    public static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string? className, string? windowTitle);
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+    private static extern IntPtr GetWindowLong32(IntPtr hWnd, int nIndex);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+    private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+    public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
+    {
+        return IntPtr.Size == 8 ? GetWindowLongPtr64(hWnd, nIndex) : GetWindowLong32(hWnd, nIndex);
+    }
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+
+    public const uint GW_OWNER = 4;
+    public const int GWL_EXSTYLE = -20;
+    public const int GWL_STYLE = -16;
+    public const long WS_EX_TOOLWINDOW = 0x00000080L;
+    public const long WS_EX_APPWINDOW = 0x00040000L;
 
     public static readonly IntPtr HWND_TOP = IntPtr.Zero;
     public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
     public static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
 
     /// <summary>
+    /// Checks if a window is an actual user-facing application window and not an internal
+    /// background/helper window (such as QTrayIconMessageWindow, Cicero, message-only, or tool windows).
+    /// </summary>
+    public static bool IsRealAppWindow(IntPtr hWnd)
+    {
+        if (hWnd == IntPtr.Zero || !IsWindow(hWnd)) return false;
+
+        // Check window class name for known background/helper/tray windows
+        var classSb = new StringBuilder(256);
+        GetClassName(hWnd, classSb, classSb.Capacity);
+        var className = classSb.ToString();
+
+        if (className.Contains("QTrayIcon", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("Message", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("WorkerW", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("CiceroUIWndFrame", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("DummyDWMListener", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("GDI+ Hook", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Check window title for known helper windows
+        var titleSb = new StringBuilder(256);
+        GetWindowText(hWnd, titleSb, titleSb.Capacity);
+        var title = titleSb.ToString();
+        if (title.Contains("QTrayIcon", StringComparison.OrdinalIgnoreCase) ||
+            title.Contains("MessageWindow", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Filter out tool windows unless explicitly marked as app windows
+        long exStyle = (long)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
+        if ((exStyle & WS_EX_TOOLWINDOW) != 0 && (exStyle & WS_EX_APPWINDOW) == 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Forcefully restores and brings a window (and its process) to the active foreground.
-    /// Uses OpenIcon, ShowWindow, SetWindowPos, AllowSetForegroundWindow, and AttachThreadInput.
+    /// Safely targets only genuine application windows and completely ignores Qt/system message windows.
     /// </summary>
     public static void ForceForegroundWindow(IntPtr hWnd, int pid = 0, string? processName = null)
     {
         AllowSetForegroundWindow(ASFW_ANY);
 
-        if (hWnd != IntPtr.Zero && IsWindow(hWnd))
+        // 1. If we have the locked window handle and it's a real app window, restore it immediately!
+        if (hWnd != IntPtr.Zero && IsRealAppWindow(hWnd))
         {
             RestoreSingleWindow(hWnd);
+            return;
         }
 
-        var pids = new HashSet<int>();
-        if (pid > 0) pids.Add(pid);
-
-        if (!string.IsNullOrEmpty(processName))
-        {
-            var cleanName = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                ? processName[..^4]
-                : processName;
-
-            try
-            {
-                foreach (var p in Process.GetProcessesByName(cleanName))
-                {
-                    pids.Add(p.Id);
-                }
-            }
-            catch { }
-        }
-
-        foreach (var targetPid in pids)
+        // 2. Otherwise try the process's MainWindowHandle
+        if (pid > 0)
         {
             try
             {
-                using var p = Process.GetProcessById(targetPid);
-                p.Refresh();
+                using var p = Process.GetProcessById(pid);
                 var mainHwnd = p.MainWindowHandle;
-                if (mainHwnd != IntPtr.Zero && mainHwnd != hWnd)
+                if (mainHwnd != IntPtr.Zero && IsRealAppWindow(mainHwnd))
                 {
                     RestoreSingleWindow(mainHwnd);
+                    return;
                 }
             }
             catch { }
         }
 
-        try
+        // 3. Fallback: Find the main visible window of this process using EnumWindows (only real app windows)
+        if (pid > 0)
         {
-            EnumWindows((h, lParam) =>
+            try
             {
-                if (IsWindow(h))
+                EnumWindows((h, lParam) =>
                 {
-                    GetWindowThreadProcessId(h, out var winPid);
-                    if (pids.Contains((int)winPid))
+                    if (IsWindow(h))
                     {
-                        if (IsIconic(h) || IsWindowVisible(h) || GetWindowTextLength(h) > 0)
+                        GetWindowThreadProcessId(h, out var winPid);
+                        if ((int)winPid == pid && IsRealAppWindow(h))
                         {
-                            RestoreSingleWindow(h);
+                            if (IsIconic(h) || IsWindowVisible(h))
+                            {
+                                RestoreSingleWindow(h);
+                                return false; // Stop after restoring the main real app window
+                            }
                         }
                     }
-                }
-                return true;
-            }, IntPtr.Zero);
+                    return true;
+                }, IntPtr.Zero);
+            }
+            catch { }
         }
-        catch { }
     }
 
     private static void RestoreSingleWindow(IntPtr hWnd)
     {
-        if (hWnd == IntPtr.Zero || !IsWindow(hWnd)) return;
+        if (hWnd == IntPtr.Zero || !IsWindow(hWnd) || !IsRealAppWindow(hWnd)) return;
 
-        // Unconditionally restore: restores if minimized, displays if normal
-        OpenIcon(hWnd);
-        ShowWindow(hWnd, SW_RESTORE);
-        ShowWindowAsync(hWnd, SW_RESTORE);
-        ShowWindow(hWnd, SW_SHOWNORMAL);
-
-        SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-
-        uint currentThreadId = GetCurrentThreadId();
-        uint targetThreadId = GetWindowThreadProcessId(hWnd, out var targetProcessId);
-        IntPtr fgHwnd = GetForegroundWindow();
-        uint fgThreadId = fgHwnd != IntPtr.Zero ? GetWindowThreadProcessId(fgHwnd, out _) : 0;
+        // Un-minimize if iconic or minimized
+        if (IsIconic(hWnd))
+        {
+            OpenIcon(hWnd);
+            ShowWindow(hWnd, SW_RESTORE);
+        }
+        else
+        {
+            ShowWindow(hWnd, SW_SHOWNORMAL);
+        }
 
         AllowSetForegroundWindow(ASFW_ANY);
+        uint targetThreadId = GetWindowThreadProcessId(hWnd, out var targetProcessId);
         AllowSetForegroundWindow(targetProcessId);
+
+        // Try direct SetForegroundWindow first — if it works cleanly without assistance, we're done!
+        if (SetForegroundWindow(hWnd))
+        {
+            SetFocus(hWnd);
+            return;
+        }
+
+        // Attach thread input queues to smoothly transfer focus without UI lag
+        uint currentThreadId = GetCurrentThreadId();
+        IntPtr fgHwnd = GetForegroundWindow();
+        uint fgThreadId = fgHwnd != IntPtr.Zero ? GetWindowThreadProcessId(fgHwnd, out _) : 0;
 
         bool attachedFg = false;
         bool attachedTarget = false;
@@ -240,10 +302,6 @@ public static class Win32
             {
                 attachedTarget = AttachThreadInput(currentThreadId, targetThreadId, true);
             }
-
-            // Simulate Alt keypress to bypass Windows 10/11 foreground restrictions
-            keybd_event(VK_MENU, 0, 0, UIntPtr.Zero);
-            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
 
             BringWindowToTop(hWnd);
             SetForegroundWindow(hWnd);

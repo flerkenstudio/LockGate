@@ -178,30 +178,19 @@ public sealed class ProcessWatcher : IDisposable
         // First restore pass (on current thread — should be UI/Dispatcher thread)
         Win32.ForceForegroundWindow(hwnd, pid, processName);
 
-        // Schedule follow-up passes using captured SynchronizationContext (to stay on UI thread if present)
+        // Schedule one gentle follow-up pass using captured SynchronizationContext (to ensure window settled)
         var syncContext = SynchronizationContext.Current;
         _ = Task.Run(async () =>
         {
-            void RestorePass()
+            await Task.Delay(150);
+            if (syncContext != null)
             {
-                if (syncContext != null)
-                {
-                    syncContext.Post(_ => Win32.ForceForegroundWindow(hwnd, pid, processName), null);
-                }
-                else
-                {
-                    Win32.ForceForegroundWindow(hwnd, pid, processName);
-                }
+                syncContext.Post(_ => Win32.ForceForegroundWindow(hwnd, pid, processName), null);
             }
-
-            await Task.Delay(100);
-            RestorePass();
-
-            await Task.Delay(200);
-            RestorePass();
-
-            await Task.Delay(500);
-            RestorePass();
+            else
+            {
+                Win32.ForceForegroundWindow(hwnd, pid, processName);
+            }
         });
 
         // Cleanup stale entries after the anti-relock window expires
