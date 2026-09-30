@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -110,6 +110,30 @@ public static class Win32
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    public static extern int GetWindowTextLength(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
+    public const byte VK_MENU = 0x12; // Alt key
+    public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+    public const uint KEYEVENTF_KEYUP = 0x0002;
+
+    public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    public static extern bool QueryFullProcessImageName(IntPtr hProcess, int dwFlags, StringBuilder lpExeName, ref int lpdwSize);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool CloseHandle(IntPtr hObject);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string? className, string? windowTitle);
+
     public static readonly IntPtr HWND_TOP = IntPtr.Zero;
     public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
     public static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
@@ -170,7 +194,7 @@ public static class Win32
                     GetWindowThreadProcessId(h, out var winPid);
                     if (pids.Contains((int)winPid))
                     {
-                        if (IsIconic(h))
+                        if (IsIconic(h) || IsWindowVisible(h) || GetWindowTextLength(h) > 0)
                         {
                             RestoreSingleWindow(h);
                         }
@@ -186,52 +210,66 @@ public static class Win32
     {
         if (hWnd == IntPtr.Zero || !IsWindow(hWnd)) return;
 
-        if (IsIconic(hWnd))
-        {
-            OpenIcon(hWnd);
-            ShowWindow(hWnd, SW_RESTORE);
-            ShowWindowAsync(hWnd, SW_RESTORE);
-        }
-        else
-        {
-            ShowWindow(hWnd, SW_SHOW);
-            ShowWindowAsync(hWnd, SW_SHOW);
-        }
+        // Unconditionally restore: restores if minimized, displays if normal
+        OpenIcon(hWnd);
+        ShowWindow(hWnd, SW_RESTORE);
+        ShowWindowAsync(hWnd, SW_RESTORE);
+        ShowWindow(hWnd, SW_SHOWNORMAL);
 
         SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
 
         uint currentThreadId = GetCurrentThreadId();
         uint targetThreadId = GetWindowThreadProcessId(hWnd, out var targetProcessId);
+        IntPtr fgHwnd = GetForegroundWindow();
+        uint fgThreadId = fgHwnd != IntPtr.Zero ? GetWindowThreadProcessId(fgHwnd, out _) : 0;
 
+        AllowSetForegroundWindow(ASFW_ANY);
         AllowSetForegroundWindow(targetProcessId);
 
-        if (currentThreadId != targetThreadId && targetThreadId != 0)
+        bool attachedFg = false;
+        bool attachedTarget = false;
+
+        try
         {
-            AttachThreadInput(currentThreadId, targetThreadId, true);
+            if (fgThreadId != 0 && fgThreadId != currentThreadId)
+            {
+                attachedFg = AttachThreadInput(currentThreadId, fgThreadId, true);
+            }
+            if (targetThreadId != 0 && targetThreadId != currentThreadId)
+            {
+                attachedTarget = AttachThreadInput(currentThreadId, targetThreadId, true);
+            }
+
+            // Simulate Alt keypress to bypass Windows 10/11 foreground restrictions
+            keybd_event(VK_MENU, 0, 0, UIntPtr.Zero);
+            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+
             BringWindowToTop(hWnd);
             SetForegroundWindow(hWnd);
             SetFocus(hWnd);
-            AttachThreadInput(currentThreadId, targetThreadId, false);
         }
-        else
+        finally
         {
-            BringWindowToTop(hWnd);
-            SetForegroundWindow(hWnd);
-            SetFocus(hWnd);
+            if (attachedTarget) AttachThreadInput(currentThreadId, targetThreadId, false);
+            if (attachedFg) AttachThreadInput(currentThreadId, fgThreadId, false);
         }
     }
 
     /// <summary>
-    /// Safely gets the executable name and path for a given process ID, handling protected system processes.
+    /// Safely gets the executable name and path for a given process ID, handling protected, elevated,
+    /// and UWP/ApplicationFrameHost hosted processes.
     /// </summary>
     public static (string Name, string? Path) GetProcessDetails(int pid)
     {
+        if (pid <= 0) return (string.Empty, null);
+
         try
         {
             using var proc = Process.GetProcessById(pid);
             var name = proc.ProcessName + ".exe";
             string? path = null;
+
             try
             {
                 path = proc.MainModule?.FileName;
@@ -240,6 +278,38 @@ public static class Win32
             {
                 // Access denied on certain system or elevated processes
             }
+
+            // Fallback for elevated processes where MainModule is inaccessible
+            if (string.IsNullOrEmpty(path))
+            {
+                var hProc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+                if (hProc != IntPtr.Zero)
+                {
+                    try
+                    {
+                        var sb = new StringBuilder(1024);
+                        int size = sb.Capacity;
+                        if (QueryFullProcessImageName(hProc, 0, sb, ref size))
+                        {
+                            path = sb.ToString();
+                        }
+                    }
+                    finally
+                    {
+                        CloseHandle(hProc);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                var exeName = System.IO.Path.GetFileName(path);
+                if (!string.IsNullOrEmpty(exeName))
+                {
+                    name = exeName;
+                }
+            }
+
             return (name, path);
         }
         catch

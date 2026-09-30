@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Threading;
 using LockGate.Core.AppLock;
 using LockGate.Core.Models;
 using LockGate.Infrastructure.Windows;
@@ -7,12 +9,20 @@ namespace LockGate.Infrastructure.Processes;
 
 public sealed class ProcessWatcher : IDisposable
 {
+    /// <summary>How long after unlock a process is immune to re-locking.</summary>
+    static readonly TimeSpan AntiRelockWindow = TimeSpan.FromSeconds(10);
+
     readonly AppLockEngine _engine;
     readonly Win32.WinEventDelegate _procDelegate;
     IntPtr _hookHandle;
     ProcessInfo _currentForegroundProcess;
     IntPtr _lastLockedHwnd;
     bool _disposed;
+    bool _isAuthInProgress;
+
+    // Track multiple recently-unlocked apps concurrently (keyed by lowercase process name)
+    readonly ConcurrentDictionary<string, long> _recentlyUnlockedByName = new(StringComparer.OrdinalIgnoreCase);
+    readonly ConcurrentDictionary<int, long> _recentlyUnlockedByPid = new();
 
     public event Action<ProcessInfo, IntPtr>? AuthenticationRequired;
     public event Action<ProcessInfo>? ForegroundChanged;
@@ -72,12 +82,27 @@ public sealed class ProcessWatcher : IDisposable
         }
     }
 
-    int _recentlyUnlockedPid;
-    string? _recentlyUnlockedProcessName;
-    long _recentlyUnlockedTimestamp;
+    bool IsRecentlyUnlocked(int pid, string processName)
+    {
+        // Check by PID
+        if (_recentlyUnlockedByPid.TryGetValue(pid, out var pidTs)
+            && Stopwatch.GetElapsedTime(pidTs) < AntiRelockWindow)
+            return true;
+
+        // Check by process name (handles multi-process apps like Electron)
+        if (!string.IsNullOrEmpty(processName)
+            && _recentlyUnlockedByName.TryGetValue(processName, out var nameTs)
+            && Stopwatch.GetElapsedTime(nameTs) < AntiRelockWindow)
+            return true;
+
+        return false;
+    }
 
     void ProcessWindow(IntPtr hwnd)
     {
+        // Don't intercept windows while an auth dialog is already showing
+        if (_isAuthInProgress) return;
+
         Win32.GetWindowThreadProcessId(hwnd, out var pid);
         if (pid == 0 || pid == Environment.ProcessId) return;
 
@@ -86,13 +111,9 @@ public sealed class ProcessWatcher : IDisposable
 
         var newProcess = new ProcessInfo((int)pid, name, path);
 
-        // If this window belongs to a process we literally just authenticated in the last 5 seconds,
+        // If this window belongs to a process we recently authenticated,
         // let it take foreground smoothly without re-locking!
-        bool isRecentlyUnlocked = (_recentlyUnlockedPid == (int)pid ||
-            (!string.IsNullOrEmpty(_recentlyUnlockedProcessName) && string.Equals(_recentlyUnlockedProcessName, newProcess.ExecutableName, StringComparison.OrdinalIgnoreCase)))
-            && Stopwatch.GetElapsedTime(_recentlyUnlockedTimestamp) < TimeSpan.FromSeconds(5);
-
-        if (isRecentlyUnlocked)
+        if (IsRecentlyUnlocked((int)pid, name))
         {
             _currentForegroundProcess = newProcess;
             ForegroundChanged?.Invoke(newProcess);
@@ -113,40 +134,109 @@ public sealed class ProcessWatcher : IDisposable
         if (decision == LockDecision.RequireAuthentication)
         {
             _lastLockedHwnd = hwnd;
+            _isAuthInProgress = true;
             // Minimize target window to protect screen contents
             Win32.ShowWindow(hwnd, Win32.SW_MINIMIZE);
             AuthenticationRequired?.Invoke(newProcess, hwnd);
         }
     }
 
+    /// <summary>
+    /// Marks auth as complete and records the unlock so that the restored window won't trigger re-lock.
+    /// Must be called from UI thread (WPF Dispatcher).
+    /// </summary>
     public void RestoreLockedWindow(IntPtr hwnd, int pid = 0, string? processName = null)
     {
-        _recentlyUnlockedPid = pid;
-        _recentlyUnlockedProcessName = processName;
-        _recentlyUnlockedTimestamp = Stopwatch.GetTimestamp();
+        _isAuthInProgress = false;
 
+        var now = Stopwatch.GetTimestamp();
+
+        // Record anti-relock by PID
+        if (pid > 0)
+            _recentlyUnlockedByPid[pid] = now;
+
+        // Record anti-relock by process name (handles multi-process apps)
+        if (!string.IsNullOrEmpty(processName))
+            _recentlyUnlockedByName[processName] = now;
+
+        // Also record all PIDs that share this process name
+        if (!string.IsNullOrEmpty(processName))
+        {
+            var cleanName = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                ? processName[..^4]
+                : processName;
+            try
+            {
+                foreach (var p in Process.GetProcessesByName(cleanName))
+                {
+                    _recentlyUnlockedByPid[p.Id] = now;
+                }
+            }
+            catch { }
+        }
+
+        // First restore pass (on current thread — should be UI/Dispatcher thread)
         Win32.ForceForegroundWindow(hwnd, pid, processName);
 
-        // Follow-up restore passes to ensure window settles cleanly above desktop/DWM after modal exit
-        Task.Run(async () =>
+        // Schedule follow-up passes using captured SynchronizationContext (to stay on UI thread if present)
+        var syncContext = SynchronizationContext.Current;
+        _ = Task.Run(async () =>
         {
-            await Task.Delay(60);
-            Win32.ForceForegroundWindow(hwnd, pid, processName);
-            await Task.Delay(140);
-            Win32.ForceForegroundWindow(hwnd, pid, processName);
+            void RestorePass()
+            {
+                if (syncContext != null)
+                {
+                    syncContext.Post(_ => Win32.ForceForegroundWindow(hwnd, pid, processName), null);
+                }
+                else
+                {
+                    Win32.ForceForegroundWindow(hwnd, pid, processName);
+                }
+            }
+
+            await Task.Delay(100);
+            RestorePass();
+
+            await Task.Delay(200);
+            RestorePass();
+
+            await Task.Delay(500);
+            RestorePass();
+        });
+
+        // Cleanup stale entries after the anti-relock window expires
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay((int)AntiRelockWindow.TotalMilliseconds + 1000);
+            CleanupStaleEntries();
         });
     }
 
+    /// <summary>Called when auth is cancelled — keeps app minimized but does NOT kill it.</summary>
+    public void CancelAuthentication(int pid)
+    {
+        _isAuthInProgress = false;
+        // Just keep the window minimized. Do NOT kill the process.
+        // The user can re-activate it and try again.
+    }
+
+    [Obsolete("Use CancelAuthentication instead. Kept for backward compatibility.")]
     public void TerminateLockedProcess(int pid)
     {
-        try
+        CancelAuthentication(pid);
+    }
+
+    void CleanupStaleEntries()
+    {
+        foreach (var kvp in _recentlyUnlockedByPid)
         {
-            using var proc = Process.GetProcessById(pid);
-            proc.Kill();
+            if (Stopwatch.GetElapsedTime(kvp.Value) > AntiRelockWindow)
+                _recentlyUnlockedByPid.TryRemove(kvp.Key, out _);
         }
-        catch
+        foreach (var kvp in _recentlyUnlockedByName)
         {
-            // Process may have already exited
+            if (Stopwatch.GetElapsedTime(kvp.Value) > AntiRelockWindow)
+                _recentlyUnlockedByName.TryRemove(kvp.Key, out _);
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Windows;
 using LockGate.App.Services;
 using LockGate.App.Views;
@@ -99,18 +99,36 @@ public partial class App : System.Windows.Application
             }
 
             _currentAuthWindow = new AuthWindow(process, hwnd);
-            var result = _currentAuthWindow.ShowDialog();
-            _currentAuthWindow = null;
+            bool? result;
+            try
+            {
+                result = _currentAuthWindow.ShowDialog();
+            }
+            finally
+            {
+                _currentAuthWindow = null;
+            }
 
             if (result == true)
             {
-                // Authenticated! AuthWindow has completely exited modal state.
+                // Authenticated! Find the matching protected app to get the correct AppId.
                 var app = LockGateService.Instance.Config.ProtectedApps
                     .FirstOrDefault(a => string.Equals(a.Executable, process.ExecutableName, StringComparison.OrdinalIgnoreCase) ||
-                                         string.Equals(a.AppId, process.ExecutableName, StringComparison.OrdinalIgnoreCase));
+                                         string.Equals(a.AppId, process.ExecutableName, StringComparison.OrdinalIgnoreCase) ||
+                                         string.Equals(a.AppId + ".exe", process.ExecutableName, StringComparison.OrdinalIgnoreCase));
 
                 var appId = app?.AppId ?? process.ExecutableName;
-                LockGateService.Instance.RecordAuthenticated(appId, hwnd, process.Pid, process.ExecutableName);
+
+                try
+                {
+                    LockGateService.Instance.RecordAuthenticated(appId, hwnd, process.Pid, process.ExecutableName);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't crash — always attempt restore even if session recording fails
+                    System.Diagnostics.Debug.WriteLine($"RecordAuthenticated failed: {ex.Message}");
+                    LockGateService.Instance.ForceRestore(hwnd, process.Pid, process.ExecutableName);
+                }
             }
             else
             {

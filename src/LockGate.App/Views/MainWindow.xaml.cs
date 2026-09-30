@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -58,7 +58,7 @@ public partial class MainWindow : Window
             ScanBadgeText.Text = "✓ Windows Hello Ready";
             ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
 
-            ScanExplanationText.Text = "Your PC has native Windows Hello security. It is selected as your primary unlock method.";
+            ScanExplanationText.Text = "Your PC supports Windows Hello. It is selected as your primary unlock method.";
 
             RadioHello.IsEnabled = true;
             if (string.Equals(effective, "WindowsHello", StringComparison.OrdinalIgnoreCase))
@@ -80,7 +80,7 @@ public partial class MainWindow : Window
             ScanBadgeText.Text = "⚠ Master PIN Active";
             ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(251, 191, 36));
 
-            ScanExplanationText.Text = "Windows Hello is not set up on this Windows account. Master PIN will be used to unlock applications.";
+            ScanExplanationText.Text = "Windows Hello is not set up on this account. Master PIN will be used to unlock applications.";
 
             RadioHello.IsEnabled = false;
             RadioPin.IsChecked = true;
@@ -124,7 +124,7 @@ public partial class MainWindow : Window
         {
             StatusPill.Background = new SolidColorBrush(Color.FromRgb(120, 53, 15));
             StatusPill.BorderBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));
-            StatusPillText.Text = "⏸ Protection Paused";
+            StatusPillText.Text = "Protection Paused";
             StatusPillText.Foreground = new SolidColorBrush(Color.FromRgb(251, 191, 36));
             PauseResumeButton.Content = "▶ Resume Protection";
         }
@@ -132,7 +132,7 @@ public partial class MainWindow : Window
         {
             StatusPill.Background = new SolidColorBrush(Color.FromRgb(6, 78, 59));
             StatusPill.BorderBrush = new SolidColorBrush(Color.FromRgb(5, 150, 105));
-            StatusPillText.Text = $"● Protection Active ({methodLabel})";
+            StatusPillText.Text = $"Protected ({methodLabel})";
             StatusPillText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
             PauseResumeButton.Content = "⏸ Pause 5m";
         }
@@ -169,12 +169,12 @@ public partial class MainWindow : Window
     {
         var border = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(51, 65, 85)),
+            Background = new SolidColorBrush(Color.FromRgb(13, 19, 34)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(34, 48, 74)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14, 10, 14, 10),
-            Margin = new Thickness(0, 0, 0, 8)
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(16, 12, 16, 12),
+            Margin = new Thickness(0, 0, 0, 10)
         };
 
         var grid = new Grid();
@@ -190,15 +190,15 @@ public partial class MainWindow : Window
         {
             Text = app.AppId,
             FontWeight = FontWeights.SemiBold,
-            FontSize = 13,
+            FontSize = 14,
             Foreground = new SolidColorBrush(Color.FromRgb(248, 250, 252))
         };
         var exeText = new TextBlock
         {
             Text = $"({app.Executable})",
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
-            Margin = new Thickness(6, 1, 0, 0)
+            Margin = new Thickness(6, 2, 0, 0)
         };
         titleStack.Children.Add(titleText);
         titleStack.Children.Add(exeText);
@@ -229,10 +229,12 @@ public partial class MainWindow : Window
         };
         var sessionBadge = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(30, 41, 59)),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(8, 4, 8, 4),
-            Margin = new Thickness(0, 0, 12, 0),
+            Background = new SolidColorBrush(Color.FromRgb(22, 32, 54)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(34, 48, 74)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(10, 5, 10, 5),
+            Margin = new Thickness(0, 0, 16, 0),
             VerticalAlignment = VerticalAlignment.Center,
             Child = new TextBlock
             {
@@ -245,15 +247,14 @@ public partial class MainWindow : Window
         Grid.SetColumn(sessionBadge, 1);
         grid.Children.Add(sessionBadge);
 
-        // Enable / Disable Checkbox
+        // Enable / Disable Checkbox (Toggle Switch style)
         var toggleCheck = new CheckBox
         {
-            Content = "Guarded",
+            Content = string.Empty,
             IsChecked = app.Enabled,
-            Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 225)),
-            FontSize = 12,
+            Style = (Style)FindResource("ToggleSwitchStyle"),
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 14, 0)
+            Margin = new Thickness(0, 0, 16, 0)
         };
         toggleCheck.Click += (s, e) =>
         {
@@ -410,32 +411,42 @@ public partial class MainWindow : Window
     void LoadSettings()
     {
         var config = LockGateService.Instance.Config;
-        DefaultSessionCombo.SelectedIndex = config.DefaultSessionMinutes switch
+        var mins = config.DefaultSessionMinutes;
+        if (mins >= 0 && mins <= 30)
         {
-            0 => 0,
-            1 => 1,
-            5 => 2,
-            15 => 3,
-            30 => 4,
-            -1 => 5,
-            _ => 2
-        };
+            SessionTimeoutSlider.Value = mins;
+            SessionTimeoutValueText.Text = mins == 0 ? "0 min (Immediate)" : $"{mins} min";
+        }
+        else if (mins == -1)
+        {
+            SessionTimeoutSlider.Value = 30;
+            SessionTimeoutValueText.Text = "Keep Unlocked";
+        }
+
         LockOnWindowsLockCheck.IsChecked = config.LockOnWindowsLock;
+    }
+
+    void SessionTimeoutSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (SessionTimeoutValueText == null) return;
+        int val = (int)e.NewValue;
+        if (val == 0)
+        {
+            SessionTimeoutValueText.Text = "0 min (Immediate)";
+        }
+        else if (val == 30)
+        {
+            SessionTimeoutValueText.Text = "30 min";
+        }
+        else
+        {
+            SessionTimeoutValueText.Text = $"{val} min";
+        }
     }
 
     void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
-        var defaultSession = DefaultSessionCombo.SelectedIndex switch
-        {
-            0 => 0,
-            1 => 1,
-            2 => 5,
-            3 => 15,
-            4 => 30,
-            5 => -1,
-            _ => 5
-        };
-
+        int defaultSession = (int)SessionTimeoutSlider.Value;
         var lockOnLock = LockOnWindowsLockCheck.IsChecked == true;
         LockGateService.Instance.UpdateGeneralSettings(defaultSession, lockOnLock);
 
@@ -461,27 +472,53 @@ public partial class MainWindow : Window
         MessageBox.Show("All application sessions locked immediately.", "LockGate", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
+    void Minimize_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    void Maximize_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = (WindowState == WindowState.Maximized) ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    void Close_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
     void NavTab_Checked(object sender, RoutedEventArgs e)
     {
         if (AppsView == null || SecurityView == null || SettingsView == null) return;
 
+        AppsView.Visibility = Visibility.Collapsed;
+        SecurityView.Visibility = Visibility.Collapsed;
+        SettingsView.Visibility = Visibility.Collapsed;
+        if (AboutView != null) AboutView.Visibility = Visibility.Collapsed;
+
         if (TabApps.IsChecked == true)
         {
             AppsView.Visibility = Visibility.Visible;
-            SecurityView.Visibility = Visibility.Collapsed;
-            SettingsView.Visibility = Visibility.Collapsed;
+            if (PageTitleText != null) PageTitleText.Text = "Locked Apps";
+            if (PageSubtitleText != null) PageSubtitleText.Text = "Manage protected applications, session durations, and instant lock rules.";
         }
         else if (TabSecurity.IsChecked == true)
         {
-            AppsView.Visibility = Visibility.Collapsed;
             SecurityView.Visibility = Visibility.Visible;
-            SettingsView.Visibility = Visibility.Collapsed;
+            if (PageTitleText != null) PageTitleText.Text = "Authentication";
+            if (PageSubtitleText != null) PageSubtitleText.Text = "Configure Windows Hello biometrics and Master PIN fallback credentials.";
         }
         else if (TabSettings.IsChecked == true)
         {
-            AppsView.Visibility = Visibility.Collapsed;
-            SecurityView.Visibility = Visibility.Collapsed;
             SettingsView.Visibility = Visibility.Visible;
+            if (PageTitleText != null) PageTitleText.Text = "Behavior";
+            if (PageSubtitleText != null) PageSubtitleText.Text = "Adjust launch, locking, schedules, and emergency controls.";
+        }
+        else if (TabAbout != null && TabAbout.IsChecked == true)
+        {
+            if (AboutView != null) AboutView.Visibility = Visibility.Visible;
+            if (PageTitleText != null) PageTitleText.Text = "About";
+            if (PageSubtitleText != null) PageSubtitleText.Text = "LockGate for Windows system architecture and security standards.";
         }
     }
 

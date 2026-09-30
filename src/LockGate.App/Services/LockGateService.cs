@@ -117,10 +117,20 @@ public sealed class LockGateService : IDisposable
         StateChanged?.Invoke();
     }
 
+    /// <summary>
+    /// Fallback restore when RecordAuthenticated fails. Ensures the window is always brought back
+    /// even if session recording had an error.
+    /// </summary>
+    public void ForceRestore(IntPtr hwnd, int pid, string? processName)
+    {
+        _processWatcher.RestoreLockedWindow(hwnd, pid, processName);
+    }
+
     public void CancelAuthentication(int pid)
     {
-        // On cancel, minimize or terminate the locked process to protect user privacy
-        _processWatcher.TerminateLockedProcess(pid);
+        // On cancel, keep the app minimized but don't kill it.
+        // The user can re-activate it to trigger auth again.
+        _processWatcher.CancelAuthentication(pid);
         StateChanged?.Invoke();
     }
 

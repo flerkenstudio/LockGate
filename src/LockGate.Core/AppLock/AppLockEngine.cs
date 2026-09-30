@@ -1,4 +1,4 @@
-﻿using LockGate.Core.Models;
+using LockGate.Core.Models;
 
 namespace LockGate.Core.AppLock;
 
@@ -19,7 +19,7 @@ public enum LockDecision
 public sealed class AppLockEngine
 {
     /// <summary>Stops a re-lock loop right after unlock in "lock immediately" mode (same idea as LockGate-Mac).</summary>
-    public static readonly TimeSpan UnlockCooldown = TimeSpan.FromSeconds(5);
+    public static readonly TimeSpan UnlockCooldown = TimeSpan.FromSeconds(10);
 
     readonly object _gate = new();
     readonly ProtectedAppRegistry _registry;
