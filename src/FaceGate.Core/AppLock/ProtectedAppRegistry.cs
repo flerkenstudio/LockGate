@@ -30,7 +30,10 @@ public sealed class ProtectedAppRegistry
     static string FileNameOf(string path) => path[(path.LastIndexOfAny(new[] { '\\', '/' }) + 1)..];
 
     public ProtectedApp? FindById(string appId) =>
-        _config.ProtectedApps.FirstOrDefault(a => string.Equals(a.AppId, appId, StringComparison.OrdinalIgnoreCase));
+        _config.ProtectedApps.FirstOrDefault(a =>
+            string.Equals(a.AppId, appId, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(a.Executable, appId, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(a.Executable, FileNameOf(appId), StringComparison.OrdinalIgnoreCase));
 
     public SessionPolicy PolicyFor(ProtectedApp app) =>
         new(app.SessionMinutes ?? _config.DefaultSessionMinutes, app.LockWhenFocusLost);

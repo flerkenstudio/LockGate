@@ -14,7 +14,6 @@ public partial class AuthWindow : Window
     readonly IntPtr _hwnd;
     readonly DispatcherTimer _lockoutTimer;
     DateTime _lockoutEndTime;
-    bool _authenticated;
     string _currentMode = "WindowsHello";
 
     public AuthWindow(ProcessInfo process, IntPtr hwnd)
@@ -241,26 +240,10 @@ public partial class AuthWindow : Window
         StatusMessage.Text = $"Too many failed attempts. Try again in {secs}s.";
     }
 
-    async void OnSuccess()
+    void OnSuccess()
     {
-        _authenticated = true;
         _lockoutTimer.Stop();
-
-        // Match the app in registry by process
-        var app = FaceGateService.Instance.Config.ProtectedApps
-            .FirstOrDefault(a => string.Equals(a.Executable, _process.ExecutableName, StringComparison.OrdinalIgnoreCase));
-
-        var appId = app?.AppId ?? _process.ExecutableName;
-
-        // Hide auth dialog immediately so it yields foreground status to Windows
-        Hide();
-
-        // Brief delay to allow Windows window manager to process the hide
-        await Task.Delay(30);
-
-        FaceGateService.Instance.RecordAuthenticated(appId, _hwnd, _process.Pid);
-
-        Close();
+        DialogResult = true;
     }
 
     void Cancel_Click(object sender, RoutedEventArgs e)
@@ -270,21 +253,13 @@ public partial class AuthWindow : Window
 
     void CancelAndClose()
     {
-        if (!_authenticated)
-        {
-            FaceGateService.Instance.CancelAuthentication(_process.Pid);
-        }
         _lockoutTimer.Stop();
-        Close();
+        DialogResult = false;
     }
 
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
-        if (!_authenticated)
-        {
-            FaceGateService.Instance.CancelAuthentication(_process.Pid);
-        }
         _lockoutTimer.Stop();
     }
 }

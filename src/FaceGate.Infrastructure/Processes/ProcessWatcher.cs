@@ -73,6 +73,7 @@ public sealed class ProcessWatcher : IDisposable
     }
 
     int _recentlyUnlockedPid;
+    string? _recentlyUnlockedProcessName;
     long _recentlyUnlockedTimestamp;
 
     void ProcessWindow(IntPtr hwnd)
@@ -85,9 +86,13 @@ public sealed class ProcessWatcher : IDisposable
 
         var newProcess = new ProcessInfo((int)pid, name, path);
 
-        // If this window belongs to a process we literally just authenticated in the last 4 seconds,
+        // If this window belongs to a process we literally just authenticated in the last 5 seconds,
         // let it take foreground smoothly without re-locking!
-        if (_recentlyUnlockedPid == (int)pid && Stopwatch.GetElapsedTime(_recentlyUnlockedTimestamp) < TimeSpan.FromSeconds(4))
+        bool isRecentlyUnlocked = (_recentlyUnlockedPid == (int)pid ||
+            (!string.IsNullOrEmpty(_recentlyUnlockedProcessName) && string.Equals(_recentlyUnlockedProcessName, newProcess.ExecutableName, StringComparison.OrdinalIgnoreCase)))
+            && Stopwatch.GetElapsedTime(_recentlyUnlockedTimestamp) < TimeSpan.FromSeconds(5);
+
+        if (isRecentlyUnlocked)
         {
             _currentForegroundProcess = newProcess;
             ForegroundChanged?.Invoke(newProcess);
@@ -114,12 +119,22 @@ public sealed class ProcessWatcher : IDisposable
         }
     }
 
-    public void RestoreLockedWindow(IntPtr hwnd, int pid = 0)
+    public void RestoreLockedWindow(IntPtr hwnd, int pid = 0, string? processName = null)
     {
         _recentlyUnlockedPid = pid;
+        _recentlyUnlockedProcessName = processName;
         _recentlyUnlockedTimestamp = Stopwatch.GetTimestamp();
 
-        Win32.ForceForegroundWindow(hwnd, pid);
+        Win32.ForceForegroundWindow(hwnd, pid, processName);
+
+        // Follow-up restore passes to ensure window settles cleanly above desktop/DWM after modal exit
+        Task.Run(async () =>
+        {
+            await Task.Delay(60);
+            Win32.ForceForegroundWindow(hwnd, pid, processName);
+            await Task.Delay(140);
+            Win32.ForceForegroundWindow(hwnd, pid, processName);
+        });
     }
 
     public void TerminateLockedProcess(int pid)

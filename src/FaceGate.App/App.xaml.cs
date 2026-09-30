@@ -92,7 +92,6 @@ public partial class App : System.Windows.Application
     {
         Dispatcher.Invoke(() =>
         {
-            // If an auth window is already displayed for this process or active, bring it to front
             if (_currentAuthWindow != null && _currentAuthWindow.IsVisible)
             {
                 _currentAuthWindow.Activate();
@@ -100,8 +99,23 @@ public partial class App : System.Windows.Application
             }
 
             _currentAuthWindow = new AuthWindow(process, hwnd);
-            _currentAuthWindow.Closed += (s, e) => { _currentAuthWindow = null; };
-            _currentAuthWindow.ShowDialog();
+            var result = _currentAuthWindow.ShowDialog();
+            _currentAuthWindow = null;
+
+            if (result == true)
+            {
+                // Authenticated! AuthWindow has completely exited modal state.
+                var app = FaceGateService.Instance.Config.ProtectedApps
+                    .FirstOrDefault(a => string.Equals(a.Executable, process.ExecutableName, StringComparison.OrdinalIgnoreCase) ||
+                                         string.Equals(a.AppId, process.ExecutableName, StringComparison.OrdinalIgnoreCase));
+
+                var appId = app?.AppId ?? process.ExecutableName;
+                FaceGateService.Instance.RecordAuthenticated(appId, hwnd, process.Pid, process.ExecutableName);
+            }
+            else
+            {
+                FaceGateService.Instance.CancelAuthentication(process.Pid);
+            }
         });
     }
 
