@@ -241,7 +241,7 @@ public partial class AuthWindow : Window
         StatusMessage.Text = $"Too many failed attempts. Try again in {secs}s.";
     }
 
-    void OnSuccess()
+    async void OnSuccess()
     {
         _authenticated = true;
         _lockoutTimer.Stop();
@@ -251,7 +251,14 @@ public partial class AuthWindow : Window
             .FirstOrDefault(a => string.Equals(a.Executable, _process.ExecutableName, StringComparison.OrdinalIgnoreCase));
 
         var appId = app?.AppId ?? _process.ExecutableName;
-        FaceGateService.Instance.RecordAuthenticated(appId, _hwnd);
+
+        // Hide auth dialog immediately so it yields foreground status to Windows
+        Hide();
+
+        // Brief delay to allow Windows window manager to process the hide
+        await Task.Delay(30);
+
+        FaceGateService.Instance.RecordAuthenticated(appId, _hwnd, _process.Pid);
 
         Close();
     }

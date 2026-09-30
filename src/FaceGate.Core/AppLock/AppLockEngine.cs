@@ -19,7 +19,7 @@ public enum LockDecision
 public sealed class AppLockEngine
 {
     /// <summary>Stops a re-lock loop right after unlock in "lock immediately" mode (same idea as FaceGate-Mac).</summary>
-    public static readonly TimeSpan UnlockCooldown = TimeSpan.FromSeconds(1);
+    public static readonly TimeSpan UnlockCooldown = TimeSpan.FromSeconds(5);
 
     readonly object _gate = new();
     readonly ProtectedAppRegistry _registry;

@@ -72,6 +72,9 @@ public sealed class ProcessWatcher : IDisposable
         }
     }
 
+    int _recentlyUnlockedPid;
+    long _recentlyUnlockedTimestamp;
+
     void ProcessWindow(IntPtr hwnd)
     {
         Win32.GetWindowThreadProcessId(hwnd, out var pid);
@@ -81,6 +84,15 @@ public sealed class ProcessWatcher : IDisposable
         if (string.IsNullOrEmpty(name)) return;
 
         var newProcess = new ProcessInfo((int)pid, name, path);
+
+        // If this window belongs to a process we literally just authenticated in the last 4 seconds,
+        // let it take foreground smoothly without re-locking!
+        if (_recentlyUnlockedPid == (int)pid && Stopwatch.GetElapsedTime(_recentlyUnlockedTimestamp) < TimeSpan.FromSeconds(4))
+        {
+            _currentForegroundProcess = newProcess;
+            ForegroundChanged?.Invoke(newProcess);
+            return;
+        }
 
         if (_currentForegroundProcess.Pid != newProcess.Pid)
         {
@@ -102,13 +114,12 @@ public sealed class ProcessWatcher : IDisposable
         }
     }
 
-    public void RestoreLockedWindow(IntPtr hwnd)
+    public void RestoreLockedWindow(IntPtr hwnd, int pid = 0)
     {
-        if (hwnd != IntPtr.Zero)
-        {
-            Win32.ShowWindow(hwnd, Win32.SW_RESTORE);
-            Win32.SetForegroundWindow(hwnd);
-        }
+        _recentlyUnlockedPid = pid;
+        _recentlyUnlockedTimestamp = Stopwatch.GetTimestamp();
+
+        Win32.ForceForegroundWindow(hwnd, pid);
     }
 
     public void TerminateLockedProcess(int pid)

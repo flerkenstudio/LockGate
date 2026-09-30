@@ -78,10 +78,10 @@ public sealed class FaceGateService : IDisposable
         StateChanged?.Invoke();
     }
 
-    public void RecordAuthenticated(string appId, IntPtr hwnd)
+    public void RecordAuthenticated(string appId, IntPtr hwnd, int pid = 0)
     {
         _engine.RecordAuthenticated(appId);
-        _processWatcher.RestoreLockedWindow(hwnd);
+        _processWatcher.RestoreLockedWindow(hwnd, pid);
         StateChanged?.Invoke();
     }
 

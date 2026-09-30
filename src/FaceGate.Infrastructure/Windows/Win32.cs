@@ -18,6 +18,8 @@ public static class Win32
     public const int SW_MINIMIZE = 6;
     public const int SW_RESTORE = 9;
 
+    public const uint ASFW_ANY = 0xFFFFFFFF;
+
     public delegate void WinEventDelegate(
         IntPtr hWinEventHook,
         uint eventType,
@@ -53,14 +55,100 @@ public static class Win32
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool AllowSetForegroundWindow(uint dwProcessId);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsIconic(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindow(IntPtr hWnd);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool IsWindowVisible(IntPtr hWnd);
 
+    [DllImport("kernel32.dll")]
+    public static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, [MarshalAs(UnmanagedType.Bool)] bool fAttach);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetFocus(IntPtr hWnd);
+
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+    /// <summary>
+    /// Forcefully restores and brings a window (and its process) to the active foreground.
+    /// Overcomes Windows 10/11 foreground locking using AllowSetForegroundWindow and AttachThreadInput.
+    /// </summary>
+    public static void ForceForegroundWindow(IntPtr hWnd, int pid = 0)
+    {
+        AllowSetForegroundWindow(ASFW_ANY);
+
+        // If a PID is provided, also locate and restore the process's main window handle
+        if (pid > 0)
+        {
+            try
+            {
+                using var p = Process.GetProcessById(pid);
+                p.Refresh();
+                var mainHwnd = p.MainWindowHandle;
+                if (mainHwnd != IntPtr.Zero && mainHwnd != hWnd)
+                {
+                    RestoreSingleWindow(mainHwnd);
+                }
+            }
+            catch { /* Process may have exited or access restricted */ }
+        }
+
+        if (hWnd != IntPtr.Zero && IsWindow(hWnd))
+        {
+            RestoreSingleWindow(hWnd);
+        }
+    }
+
+    private static void RestoreSingleWindow(IntPtr hWnd)
+    {
+        ShowWindow(hWnd, SW_RESTORE);
+        ShowWindowAsync(hWnd, SW_RESTORE);
+
+        uint currentThreadId = GetCurrentThreadId();
+        uint targetThreadId = GetWindowThreadProcessId(hWnd, out var targetProcessId);
+
+        AllowSetForegroundWindow(targetProcessId);
+
+        if (currentThreadId != targetThreadId && targetThreadId != 0)
+        {
+            AttachThreadInput(currentThreadId, targetThreadId, true);
+            BringWindowToTop(hWnd);
+            SetForegroundWindow(hWnd);
+            SetFocus(hWnd);
+            AttachThreadInput(currentThreadId, targetThreadId, false);
+        }
+        else
+        {
+            BringWindowToTop(hWnd);
+            SetForegroundWindow(hWnd);
+            SetFocus(hWnd);
+        }
+    }
 
     /// <summary>
     /// Safely gets the executable name and path for a given process ID, handling protected system processes.
