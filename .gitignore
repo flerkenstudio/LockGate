@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+*.user
+*.log
+# never commit biometric data or secrets
+*.encrypted
+face_data*

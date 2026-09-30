@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>FaceGate.Core</RootNamespace>
+  </PropertyGroup>
+</Project>
