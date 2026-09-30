@@ -133,6 +133,27 @@ public sealed class FaceGateService : IDisposable
         StateChanged?.Invoke();
     }
 
+    public async Task<string> GetEffectiveSecurityMethodAsync()
+    {
+        if (string.Equals(Config.ActiveSecurityMethod, "WindowsHello", StringComparison.OrdinalIgnoreCase))
+            return "WindowsHello";
+
+        if (string.Equals(Config.ActiveSecurityMethod, "LocalCode", StringComparison.OrdinalIgnoreCase))
+            return "LocalCode";
+
+        // Auto: detect system hardware and capabilities
+        var helloAvailable = await WindowsHelloService.IsAvailableAsync();
+        return helloAvailable ? "WindowsHello" : "LocalCode";
+    }
+
+    public void SetActiveSecurityMethod(string method)
+    {
+        var newConfig = Config with { ActiveSecurityMethod = method };
+        _configStore.Save(newConfig);
+        _registry.Update(newConfig);
+        StateChanged?.Invoke();
+    }
+
     public void LockAll()
     {
         _engine.LockAll();

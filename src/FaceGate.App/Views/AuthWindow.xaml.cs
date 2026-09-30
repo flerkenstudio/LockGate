@@ -15,6 +15,7 @@ public partial class AuthWindow : Window
     readonly DispatcherTimer _lockoutTimer;
     DateTime _lockoutEndTime;
     bool _authenticated;
+    string _currentMode = "WindowsHello";
 
     public AuthWindow(ProcessInfo process, IntPtr hwnd)
     {
@@ -30,23 +31,91 @@ public partial class AuthWindow : Window
 
     async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        PinBox.Focus();
+        var effectiveMode = await FaceGateService.Instance.GetEffectiveSecurityMethodAsync();
+        SetAuthMode(effectiveMode);
 
-        var helloAvailable = await WindowsHelloService.IsAvailableAsync();
-        if (helloAvailable)
+        if (_currentMode == "WindowsHello")
         {
-            WindowsHelloButton.Visibility = Visibility.Visible;
-            // Optionally try Windows Hello immediately
+            // Auto-trigger Windows Hello prompt immediately upon appearance
+            await Dispatcher.Yield();
             TryWindowsHello();
         }
     }
 
+    void SetAuthMode(string mode)
+    {
+        _currentMode = mode;
+
+        if (mode == "WindowsHello")
+        {
+            HelloPanel.Visibility = Visibility.Visible;
+            PinPanel.Visibility = Visibility.Collapsed;
+
+            HeaderIcon.Text = "👤";
+            HeaderTitle.Text = "Windows Hello";
+            HeaderSubtitle.Text = "Verify your identity to unlock";
+
+            if (FaceGateService.Instance.IsPinConfigured)
+            {
+                SwitchModeButton.Content = "Use Master PIN instead";
+                SwitchModeButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SwitchModeButton.Visibility = Visibility.Collapsed;
+            }
+        }
+        else
+        {
+            HelloPanel.Visibility = Visibility.Collapsed;
+            PinPanel.Visibility = Visibility.Visible;
+
+            HeaderIcon.Text = "🔒";
+            HeaderTitle.Text = "Master PIN";
+            HeaderSubtitle.Text = "Enter PIN to unlock";
+
+            PinBox.Focus();
+
+            SwitchModeButton.Content = "Use Windows Hello instead";
+            SwitchModeButton.Visibility = Visibility.Visible;
+        }
+    }
+
+    void SwitchMode_Click(object sender, RoutedEventArgs e)
+    {
+        StatusMessage.Text = string.Empty;
+        if (_currentMode == "WindowsHello")
+        {
+            SetAuthMode("LocalCode");
+        }
+        else
+        {
+            SetAuthMode("WindowsHello");
+            TryWindowsHello();
+        }
+    }
+
+    async void WindowsHello_Click(object sender, RoutedEventArgs e)
+    {
+        TryWindowsHello();
+    }
+
     async void TryWindowsHello()
     {
+        StatusMessage.Foreground = System.Windows.Media.Brushes.SkyBlue;
+        StatusMessage.Text = "Waiting for Windows Hello prompt...";
+
         var verified = await WindowsHelloService.VerifyAsync($"FaceGate: Unlock {_process.ExecutableName}");
         if (verified)
         {
+            StatusMessage.Foreground = System.Windows.Media.Brushes.MediumSpringGreen;
+            StatusMessage.Text = "✓ Identity verified";
             OnSuccess();
+        }
+        else
+        {
+            StatusMessage.Foreground = System.Windows.Media.Brushes.IndianRed;
+            StatusMessage.Text = "Windows Hello cancelled or failed. Click to retry.";
         }
     }
 
@@ -54,7 +123,14 @@ public partial class AuthWindow : Window
     {
         if (e.Key == Key.Enter)
         {
-            SubmitPin();
+            if (_currentMode == "WindowsHello")
+            {
+                TryWindowsHello();
+            }
+            else
+            {
+                SubmitPin();
+            }
             e.Handled = true;
         }
         else if (e.Key == Key.Escape)
@@ -102,6 +178,7 @@ public partial class AuthWindow : Window
         var pin = PinBox.Password;
         if (string.IsNullOrWhiteSpace(pin))
         {
+            StatusMessage.Foreground = System.Windows.Media.Brushes.IndianRed;
             StatusMessage.Text = "Please enter your PIN.";
             return;
         }
@@ -114,6 +191,7 @@ public partial class AuthWindow : Window
                 break;
 
             case PinResult.Incorrect:
+                StatusMessage.Foreground = System.Windows.Media.Brushes.IndianRed;
                 StatusMessage.Text = "Incorrect PIN. Please try again.";
                 PinBox.Password = string.Empty;
                 PinBox.Focus();
@@ -124,6 +202,7 @@ public partial class AuthWindow : Window
                 break;
 
             case PinResult.NotConfigured:
+                StatusMessage.Foreground = System.Windows.Media.Brushes.IndianRed;
                 StatusMessage.Text = "PIN is not set yet. Configure it in Dashboard.";
                 break;
         }
@@ -158,12 +237,8 @@ public partial class AuthWindow : Window
     {
         var remaining = _lockoutEndTime - DateTime.UtcNow;
         var secs = Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds));
+        StatusMessage.Foreground = System.Windows.Media.Brushes.IndianRed;
         StatusMessage.Text = $"Too many failed attempts. Try again in {secs}s.";
-    }
-
-    async void WindowsHello_Click(object sender, RoutedEventArgs e)
-    {
-        await WindowsHelloService.VerifyAsync($"FaceGate: Unlock {_process.ExecutableName}");
     }
 
     void OnSuccess()

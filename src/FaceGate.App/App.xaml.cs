@@ -15,9 +15,10 @@ public partial class App : System.Windows.Application
     Views.MainWindow? _dashboardWindow;
     AuthWindow? _currentAuthWindow;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
 
         _singleInstanceMutex = new Mutex(true, MutexName, out var createdNew);
         if (!createdNew)

@@ -2,8 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="FaceGate - Windows Application Locker"
-        Height="640" Width="820"
-        MinHeight="550" MinWidth="700"
+        Height="650" Width="840"
+        MinHeight="560" MinWidth="720"
         WindowStartupLocation="CenterScreen"
         Background="#0F172A"
         Foreground="#F8FAFC"
@@ -156,7 +156,7 @@
                     </StackPanel>
 
                     <!-- Status Pill -->
-                    <Border x:Name="StatusPill" CornerRadius="12" Background="#064E3B" BorderBrush="#059669" BorderThickness="1" Padding="10,4" Margin="24,0,0,0" VerticalAlignment="Center">
+                    <Border x:Name="StatusPill" CornerRadius="12" Background="#064E3B" BorderBrush="#059669" BorderThickness="1" Padding="12,5" Margin="24,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="StatusPillText" Text="● Protection Active" Foreground="#34D399" FontSize="11" FontWeight="SemiBold" />
                     </Border>
                 </StackPanel>
@@ -173,7 +173,7 @@
         <Border Grid.Row="1" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="20,12">
             <StackPanel Orientation="Horizontal">
                 <RadioButton x:Name="TabApps" Content="🛡️ Protected Applications" Style="{StaticResource NavTabStyle}" IsChecked="True" Checked="NavTab_Checked" />
-                <RadioButton x:Name="TabSecurity" Content="🔑 Master PIN &amp; Security" Style="{StaticResource NavTabStyle}" Checked="NavTab_Checked" />
+                <RadioButton x:Name="TabSecurity" Content="👤 Security &amp; Windows Hello" Style="{StaticResource NavTabStyle}" Checked="NavTab_Checked" />
                 <RadioButton x:Name="TabSettings" Content="⚙️ Settings" Style="{StaticResource NavTabStyle}" Checked="NavTab_Checked" />
             </StackPanel>
         </Border>
@@ -262,51 +262,89 @@
                 </Border>
             </Grid>
 
-            <!-- Tab 2: Security & PIN -->
+            <!-- Tab 2: Security & Windows Hello -->
             <Grid x:Name="SecurityView" Visibility="Collapsed">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel MaxWidth="600" HorizontalAlignment="Left">
-                        <!-- Master PIN Configuration Card -->
-                        <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                    <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+
+                        <!-- System Security Scan & Selection Hero Card -->
+                        <Border Background="#1E293B" BorderBrush="#3B82F6" BorderThickness="1.5" CornerRadius="12" Padding="20" Margin="0,0,0,16">
                             <StackPanel>
-                                <TextBlock Text="Master PIN Authentication" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4" />
-                                <TextBlock Text="This PIN is used to unlock protected applications and modify settings." FontSize="12" Foreground="#94A3B8" Margin="0,0,0,16" />
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="System Security Scan &amp; Selection" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF" />
+                                        <TextBlock Text="Automatic hardware &amp; security capability detection for this PC" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1" x:Name="ScanBadge" CornerRadius="12" Background="#064E3B" BorderBrush="#059669" BorderThickness="1" Padding="10,4">
+                                        <TextBlock x:Name="ScanBadgeText" Text="✓ Windows Hello Ready" FontSize="11" FontWeight="SemiBold" Foreground="#34D399" />
+                                    </Border>
+                                </Grid>
 
-                                <TextBlock Text="New PIN (4-12 digits):" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,6" />
-                                <PasswordBox x:Name="NewPinBox" Height="36" Background="#0F172A" Foreground="#FFFFFF" BorderBrush="#475569" Margin="0,0,0,12" VerticalContentAlignment="Center" Padding="8,4" />
+                                <!-- Hardware Detection Result Banner -->
+                                <Border x:Name="ScanResultBanner" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <TextBlock Text="Hardware &amp; System Biometrics: " FontSize="13" Foreground="#94A3B8" />
+                                            <TextBlock x:Name="WindowsHelloStatusText" Text="Scanning..." FontSize="13" FontWeight="Bold" Foreground="#38BDF8" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="ScanExplanationText" Text="Your PC supports Windows Hello. Windows Hello will be used as the primary unlock security." FontSize="11" Foreground="#CBD5E1" />
+                                    </StackPanel>
+                                </Border>
 
-                                <TextBlock Text="Confirm New PIN:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,6" />
-                                <PasswordBox x:Name="ConfirmPinBox" Height="36" Background="#0F172A" Foreground="#FFFFFF" BorderBrush="#475569" Margin="0,0,0,16" VerticalContentAlignment="Center" Padding="8,4" />
+                                <!-- Lock Method Option -->
+                                <TextBlock Text="Active Unlock Method:" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,8" />
+                                <StackPanel Margin="0,0,0,14">
+                                    <RadioButton x:Name="RadioHello" GroupName="LockMethodGroup" IsChecked="True" Margin="0,0,0,8" Checked="LockMethod_Changed">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="👤 Windows Hello (Recommended)" FontWeight="SemiBold" Foreground="#F8FAFC" FontSize="13" />
+                                            <TextBlock Text=" — Facial recognition, fingerprint, or Windows PIN" Foreground="#94A3B8" FontSize="11" Margin="6,2,0,0" />
+                                        </StackPanel>
+                                    </RadioButton>
+                                    <RadioButton x:Name="RadioPin" GroupName="LockMethodGroup" Margin="0,0,0,8" Checked="LockMethod_Changed">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="🔑 Master PIN" FontWeight="SemiBold" Foreground="#F8FAFC" FontSize="13" />
+                                            <TextBlock Text=" — Dedicated local PBKDF2 PIN (DPAPI encrypted)" Foreground="#94A3B8" FontSize="11" Margin="6,2,0,0" />
+                                        </StackPanel>
+                                    </RadioButton>
+                                </StackPanel>
 
-                                <TextBlock x:Name="PinStatusMessage" Text="" FontSize="12" FontWeight="Medium" Foreground="#10B981" Margin="0,0,0,12" />
-
-                                <Button Content="Set Master PIN" Style="{StaticResource PrimaryButton}" Height="36" HorizontalAlignment="Left" Click="SavePin_Click" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Test Windows Hello Prompt" Style="{StaticResource PrimaryButton}" Height="34" Margin="0,0,8,0" Click="TestHello_Click" />
+                                    <Button Content="Re-Scan System" Style="{StaticResource SecondaryButton}" Height="34" Click="RescanSystem_Click" />
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
-                        <!-- Windows Hello Card -->
-                        <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                        <!-- Master PIN Configuration Card -->
+                        <Border x:Name="PinConfigCard" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
                             <StackPanel>
-                                <TextBlock Text="Windows Hello Biometrics / PIN" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4" />
-                                <TextBlock Text="Authenticate seamlessly using Windows Hello face, fingerprint, or system PIN." FontSize="12" Foreground="#94A3B8" Margin="0,0,0,12" />
+                                <TextBlock Text="Master PIN Configuration" FontSize="15" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4" />
+                                <TextBlock Text="Used if Master PIN mode is chosen or as an alternate unlock method." FontSize="12" Foreground="#94A3B8" Margin="0,0,0,14" />
 
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                    <TextBlock Text="Availability: " FontSize="13" Foreground="#CBD5E1" />
-                                    <TextBlock x:Name="WindowsHelloStatusText" Text="Checking..." FontSize="13" FontWeight="SemiBold" Foreground="#38BDF8" />
-                                </StackPanel>
+                                <TextBlock Text="New PIN (4-12 digits):" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,6" />
+                                <PasswordBox x:Name="NewPinBox" Height="36" Background="#0F172A" Foreground="#FFFFFF" BorderBrush="#475569" Margin="0,0,0,10" VerticalContentAlignment="Center" Padding="8,4" />
 
-                                <Button Content="Test Windows Hello Prompt" Style="{StaticResource SecondaryButton}" Height="36" HorizontalAlignment="Left" Click="TestHello_Click" />
+                                <TextBlock Text="Confirm New PIN:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,6" />
+                                <PasswordBox x:Name="ConfirmPinBox" Height="36" Background="#0F172A" Foreground="#FFFFFF" BorderBrush="#475569" Margin="0,0,0,14" VerticalContentAlignment="Center" Padding="8,4" />
+
+                                <TextBlock x:Name="PinStatusMessage" Text="" FontSize="12" FontWeight="Medium" Foreground="#10B981" Margin="0,0,0,10" />
+
+                                <Button Content="Set Master PIN" Style="{StaticResource SecondaryButton}" Height="34" HorizontalAlignment="Left" Click="SavePin_Click" />
                             </StackPanel>
                         </Border>
 
                         <!-- Cryptography Architecture Card -->
-                        <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="12" Padding="20">
+                        <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="1" CornerRadius="12" Padding="16">
                             <StackPanel>
-                                <TextBlock Text="Security Standards &amp; Architecture" FontSize="14" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,8" />
-                                <TextBlock Text="• Verifier KDF: PBKDF2-HMAC-SHA-256 with 600,000 iterations (OWASP compliant)" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                <TextBlock Text="• Storage: Encrypted via Windows DPAPI (CurrentUser Scope, pin.dat)" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                <TextBlock Text="• Rate Limiting: 5 free attempts followed by exponential backoff lockout up to 15 min" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                <TextBlock Text="• Session Clock: Monotonic TimeProvider (resists Windows clock tampering)" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
+                                <TextBlock Text="Security Standards &amp; Architecture" FontSize="13" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,6" />
+                                <TextBlock Text="• Windows Hello: Authenticates against Windows Hello biometric / TPM credentials" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
+                                <TextBlock Text="• Master PIN KDF: PBKDF2-HMAC-SHA-256 with 600,000 iterations (OWASP compliant)" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
+                                <TextBlock Text="• Secret Storage: Encrypted via Windows DPAPI (CurrentUser Scope, pin.dat)" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
+                                <TextBlock Text="• Session Clock: Monotonic TimeProvider (resists Windows clock tampering)" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
                             </StackPanel>
                         </Border>
                     </StackPanel>

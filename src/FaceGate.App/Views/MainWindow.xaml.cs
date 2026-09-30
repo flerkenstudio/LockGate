@@ -12,6 +12,7 @@ namespace FaceGate.App.Views;
 public partial class MainWindow : Window
 {
     public bool AllowClose { get; set; }
+    bool _isInitializing = true;
 
     public MainWindow()
     {
@@ -24,11 +25,10 @@ public partial class MainWindow : Window
 
         RefreshAppsList();
         LoadSettings();
+        await ScanSystemSecurityAsync();
         UpdateStatusHeader();
 
-        var helloAvailable = await WindowsHelloService.IsAvailableAsync();
-        WindowsHelloStatusText.Text = helloAvailable ? "Available & Ready" : "Not Supported on this Device";
-        WindowsHelloStatusText.Foreground = new SolidColorBrush(helloAvailable ? Color.FromRgb(52, 211, 153) : Color.FromRgb(239, 68, 68));
+        _isInitializing = false;
     }
 
     void OnStateChanged()
@@ -40,9 +40,86 @@ public partial class MainWindow : Window
         });
     }
 
+    async Task ScanSystemSecurityAsync()
+    {
+        WindowsHelloStatusText.Text = "Scanning...";
+        WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(56, 189, 248));
+
+        var helloAvailable = await WindowsHelloService.IsAvailableAsync();
+        var effective = await FaceGateService.Instance.GetEffectiveSecurityMethodAsync();
+
+        if (helloAvailable)
+        {
+            WindowsHelloStatusText.Text = "Available & Configured (Face / Fingerprint / PIN)";
+            WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
+
+            ScanBadge.Background = new SolidColorBrush(Color.FromRgb(6, 78, 59));
+            ScanBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(5, 150, 105));
+            ScanBadgeText.Text = "✓ Windows Hello Ready";
+            ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
+
+            ScanExplanationText.Text = "Your PC has native Windows Hello security. It is selected as your primary unlock method.";
+
+            RadioHello.IsEnabled = true;
+            if (string.Equals(effective, "WindowsHello", StringComparison.OrdinalIgnoreCase))
+            {
+                RadioHello.IsChecked = true;
+            }
+            else
+            {
+                RadioPin.IsChecked = true;
+            }
+        }
+        else
+        {
+            WindowsHelloStatusText.Text = "Not Detected or Not Set Up";
+            WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+
+            ScanBadge.Background = new SolidColorBrush(Color.FromRgb(120, 53, 15));
+            ScanBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+            ScanBadgeText.Text = "⚠ Master PIN Active";
+            ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(251, 191, 36));
+
+            ScanExplanationText.Text = "Windows Hello is not set up on this Windows account. Master PIN will be used to unlock applications.";
+
+            RadioHello.IsEnabled = false;
+            RadioPin.IsChecked = true;
+        }
+    }
+
+    async void RescanSystem_Click(object sender, RoutedEventArgs e)
+    {
+        await ScanSystemSecurityAsync();
+        UpdateStatusHeader();
+    }
+
+    void LockMethod_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_isInitializing) return;
+
+        if (RadioHello.IsChecked == true)
+        {
+            FaceGateService.Instance.SetActiveSecurityMethod("WindowsHello");
+        }
+        else if (RadioPin.IsChecked == true)
+        {
+            FaceGateService.Instance.SetActiveSecurityMethod("LocalCode");
+        }
+
+        UpdateStatusHeader();
+    }
+
     void UpdateStatusHeader()
     {
         var service = FaceGateService.Instance;
+        var configMethod = service.Config.ActiveSecurityMethod;
+        string methodLabel = configMethod switch
+        {
+            "WindowsHello" => "Windows Hello",
+            "LocalCode" => "Master PIN",
+            _ => "Windows Hello (Auto)"
+        };
+
         if (service.IsPaused)
         {
             StatusPill.Background = new SolidColorBrush(Color.FromRgb(120, 53, 15));
@@ -55,7 +132,7 @@ public partial class MainWindow : Window
         {
             StatusPill.Background = new SolidColorBrush(Color.FromRgb(6, 78, 59));
             StatusPill.BorderBrush = new SolidColorBrush(Color.FromRgb(5, 150, 105));
-            StatusPillText.Text = "● Protection Active";
+            StatusPillText.Text = $"● Protection Active ({methodLabel})";
             StatusPillText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
             PauseResumeButton.Content = "⏸ Pause 5m";
         }

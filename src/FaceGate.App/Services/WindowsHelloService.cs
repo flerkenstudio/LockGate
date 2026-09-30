@@ -17,6 +17,27 @@ public static class WindowsHelloService
         }
     }
 
+    public static async Task<string> GetDetailedStatusAsync()
+    {
+        try
+        {
+            var status = await UserConsentVerifier.CheckAvailabilityAsync();
+            return status switch
+            {
+                UserConsentVerifierAvailability.Available => "Available",
+                UserConsentVerifierAvailability.DeviceNotPresent => "DeviceNotPresent",
+                UserConsentVerifierAvailability.NotConfiguredForUser => "NotConfiguredForUser",
+                UserConsentVerifierAvailability.DisabledByPolicy => "DisabledByPolicy",
+                UserConsentVerifierAvailability.DeviceBusy => "DeviceBusy",
+                _ => status.ToString()
+            };
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+    }
+
     public static async Task<bool> VerifyAsync(string message = "Unlock protected application")
     {
         try
