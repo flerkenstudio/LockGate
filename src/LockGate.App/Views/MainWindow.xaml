@@ -78,10 +78,10 @@
                 </StackPanel>
 
                 <!-- Footer Status Pill -->
-                <Border Grid.Row="3" x:Name="StatusPill" CornerRadius="12" Background="#064E3B" BorderBrush="#059669" BorderThickness="1" Padding="12,8" Margin="0,12,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="🛡️" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" />
-                        <TextBlock x:Name="StatusPillText" Text="Protected locally" Foreground="#34D399" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Border Grid.Row="3" x:Name="StatusPill" CornerRadius="12" Background="#064E3B" BorderBrush="#059669" BorderThickness="1" Padding="10,6" Margin="0,12,0,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🛡️" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock x:Name="StatusPillText" Text="Protected" Foreground="#34D399" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="170" />
                     </StackPanel>
                 </Border>
             </Grid>

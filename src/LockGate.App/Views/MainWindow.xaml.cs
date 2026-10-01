@@ -115,9 +115,9 @@ public partial class MainWindow : Window
         var configMethod = service.Config.ActiveSecurityMethod;
         string methodLabel = configMethod switch
         {
-            "WindowsHello" => "Windows Hello",
-            "LocalCode" => "Master PIN",
-            _ => "Windows Hello (Auto)"
+            "WindowsHello" => "Hello",
+            "LocalCode" => "PIN",
+            _ => "Auto"
         };
 
         if (service.IsPaused)
