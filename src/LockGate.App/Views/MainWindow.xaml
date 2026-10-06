@@ -528,7 +528,7 @@
                                             </Border>
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock Text="LockGate for Windows" FontSize="18" FontWeight="Bold" Foreground="#0F172A" />
-                                                <TextBlock Text="Version 1.0.0 (Native Release)" FontSize="12" Foreground="#64748B" />
+                                                <TextBlock Text="Version 1.0.0 (Native Release) • Flerken Studio" FontSize="12" Foreground="#64748B" />
                                             </StackPanel>
                                         </StackPanel>
 
@@ -558,7 +558,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock x:Name="FooterInfoText" Text="LockGate Active • Monitoring foreground processes • System Tray enabled" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="v1.0.0 (Windows Native)" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="v1.0.0 (Windows Native) • Flerken Studio" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" />
                     </Grid>
                 </Border>
             </Grid>
