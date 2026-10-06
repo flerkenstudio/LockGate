@@ -10,10 +10,45 @@ namespace LockGate.App;
 public partial class App : System.Windows.Application
 {
     const string MutexName = "LockGate_Windows_SingleInstance_Mutex";
+    const string EventName = "LockGate_Windows_ShowDashboard_Event";
     Mutex? _singleInstanceMutex;
+    EventWaitHandle? _showDashboardEvent;
+    RegisteredWaitHandle? _registeredWait;
     Forms.NotifyIcon? _trayIcon;
     Views.MainWindow? _dashboardWindow;
     AuthWindow? _currentAuthWindow;
+
+    public App()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+        {
+            var ex = args.ExceptionObject as Exception;
+            var path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockGate", "crash.log");
+            try
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+                System.IO.File.AppendAllText(path, $"[{DateTime.UtcNow}] AppDomain Crash: {ex}\n\n");
+            }
+            catch { }
+        };
+
+        DispatcherUnhandledException += (s, args) =>
+        {
+            var ex = args.Exception;
+            var path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockGate", "crash.log");
+            try
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+                System.IO.File.AppendAllText(path, $"[{DateTime.UtcNow}] Dispatcher Crash: {ex}\n\n");
+            }
+            catch { }
+            System.Windows.MessageBox.Show(
+                $"Startup Error: {ex.Message}\n\n{ex.StackTrace}",
+                "LockGate Critical Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        };
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -22,14 +57,27 @@ public partial class App : System.Windows.Application
         _singleInstanceMutex = new Mutex(true, MutexName, out var createdNew);
         if (!createdNew)
         {
-            System.Windows.MessageBox.Show(
-                "LockGate is already running in the background. Check your System Tray.",
-                "LockGate",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            // Another instance is already running — wake it up and show the dashboard!
+            try
+            {
+                using var existingEvent = EventWaitHandle.OpenExisting(EventName);
+                existingEvent.Set();
+            }
+            catch { }
+
             Shutdown();
             return;
         }
+
+        try
+        {
+            _showDashboardEvent = new EventWaitHandle(false, EventResetMode.AutoReset, EventName);
+            _registeredWait = ThreadPool.RegisterWaitForSingleObject(_showDashboardEvent, (state, timedOut) =>
+            {
+                Dispatcher.Invoke(() => ShowDashboard());
+            }, null, -1, false);
+        }
+        catch { }
 
         // Initialize background engine and services
         LockGateService.Initialize();
@@ -46,10 +94,22 @@ public partial class App : System.Windows.Application
 
     void InitTrayIcon()
     {
+        System.Drawing.Icon appIcon;
+        try
+        {
+            var iconUri = new Uri("pack://application:,,,/Assets/app.ico");
+            var streamInfo = System.Windows.Application.GetResourceStream(iconUri);
+            appIcon = new System.Drawing.Icon(streamInfo.Stream);
+        }
+        catch
+        {
+            appIcon = System.Drawing.SystemIcons.Shield;
+        }
+
         _trayIcon = new Forms.NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Shield,
-            Text = "LockGate - Application Locker",
+            Icon = appIcon,
+            Text = "FaceGate - Application Locker",
             Visible = true
         };
 
@@ -161,6 +221,9 @@ public partial class App : System.Windows.Application
             LockGateService.Instance.Dispose();
         }
         catch { /* Ignore */ }
+
+        _registeredWait?.Unregister(null);
+        _showDashboardEvent?.Dispose();
 
         if (_singleInstanceMutex != null)
         {

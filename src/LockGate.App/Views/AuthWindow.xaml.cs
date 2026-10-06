@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -15,6 +15,7 @@ public partial class AuthWindow : Window
     readonly DispatcherTimer _lockoutTimer;
     DateTime _lockoutEndTime;
     string _currentMode = "WindowsHello";
+    int _consecutiveFailures;
 
     public AuthWindow(ProcessInfo process, IntPtr hwnd)
     {
@@ -31,6 +32,12 @@ public partial class AuthWindow : Window
     async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         var effectiveMode = await LockGateService.Instance.GetEffectiveSecurityMethodAsync();
+
+        if (effectiveMode == "WindowsHello" && LockGateService.Instance.IsFaceUnlockDisabledNow())
+        {
+            effectiveMode = "LocalCode";
+        }
+
         SetAuthMode(effectiveMode);
 
         if (_currentMode == "WindowsHello")
@@ -50,7 +57,6 @@ public partial class AuthWindow : Window
             HelloPanel.Visibility = Visibility.Visible;
             PinPanel.Visibility = Visibility.Collapsed;
 
-            HeaderIcon.Text = "👤";
             HeaderTitle.Text = "Windows Hello";
             HeaderSubtitle.Text = "Verify your identity to unlock";
 
@@ -69,7 +75,6 @@ public partial class AuthWindow : Window
             HelloPanel.Visibility = Visibility.Collapsed;
             PinPanel.Visibility = Visibility.Visible;
 
-            HeaderIcon.Text = "🔒";
             HeaderTitle.Text = "Master PIN";
             HeaderSubtitle.Text = "Enter PIN to unlock";
 
@@ -107,12 +112,29 @@ public partial class AuthWindow : Window
         var verified = await WindowsHelloService.VerifyAsync($"LockGate: Unlock {_process.ExecutableName}");
         if (verified)
         {
+            _consecutiveFailures = 0;
+            LockGateService.Instance.LogSecurityEvent("SuccessUnlock", _process.ExecutableName, _process.ExecutableName, "Unlocked via Windows Hello");
             StatusMessage.Foreground = System.Windows.Media.Brushes.MediumSpringGreen;
             StatusMessage.Text = "✓ Identity verified";
             OnSuccess();
         }
         else
         {
+            _consecutiveFailures++;
+            LockGateService.Instance.LogSecurityEvent("FailedHello", _process.ExecutableName, _process.ExecutableName, $"Windows Hello verification failed (count: {_consecutiveFailures})");
+
+            if (_consecutiveFailures >= 3)
+            {
+                _ = Task.Run(async () =>
+                {
+                    var snapshot = await IntruderCaptureService.CaptureSnapshotAsync($"Intruder detected on {_process.ExecutableName}");
+                    if (snapshot != null)
+                    {
+                        LockGateService.Instance.LogSecurityEvent("IntruderSnapshot", _process.ExecutableName, _process.ExecutableName, "Webcam photo captured after 3 failed Hello attempts", snapshot);
+                    }
+                });
+            }
+
             StatusMessage.Foreground = System.Windows.Media.Brushes.IndianRed;
             StatusMessage.Text = "Windows Hello cancelled or failed. Click to retry.";
         }
@@ -186,10 +208,27 @@ public partial class AuthWindow : Window
         switch (attempt.Result)
         {
             case PinResult.Success:
+                _consecutiveFailures = 0;
+                LockGateService.Instance.LogSecurityEvent("SuccessUnlock", _process.ExecutableName, _process.ExecutableName, "Unlocked via Master PIN");
                 OnSuccess();
                 break;
 
             case PinResult.Incorrect:
+                _consecutiveFailures++;
+                LockGateService.Instance.LogSecurityEvent("FailedPin", _process.ExecutableName, _process.ExecutableName, $"Incorrect PIN attempt (count: {_consecutiveFailures})");
+
+                if (_consecutiveFailures >= 3)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        var snapshot = await IntruderCaptureService.CaptureSnapshotAsync($"Intruder detected on {_process.ExecutableName}");
+                        if (snapshot != null)
+                        {
+                            LockGateService.Instance.LogSecurityEvent("IntruderSnapshot", _process.ExecutableName, _process.ExecutableName, "Webcam photo captured after 3 failed attempts", snapshot);
+                        }
+                    });
+                }
+
                 StatusMessage.Foreground = System.Windows.Media.Brushes.IndianRed;
                 StatusMessage.Text = "Incorrect PIN. Please try again.";
                 PinBox.Password = string.Empty;
@@ -197,6 +236,8 @@ public partial class AuthWindow : Window
                 break;
 
             case PinResult.LockedOut:
+                _consecutiveFailures++;
+                LockGateService.Instance.LogSecurityEvent("PinLockedOut", _process.ExecutableName, _process.ExecutableName, $"Lockout triggered for {attempt.RetryAfter.TotalSeconds}s");
                 StartLockout(attempt.RetryAfter);
                 break;
 

@@ -1,4 +1,4 @@
-﻿using LockGate.Core.Models;
+using LockGate.Core.Models;
 
 namespace LockGate.Core.Configuration;
 
@@ -15,6 +15,27 @@ public sealed record AppConfig
 
     /// <summary>Active unlock method: "Auto", "WindowsHello", or "LocalCode".</summary>
     public string ActiveSecurityMethod { get; init; } = "Auto";
+
+    /// <summary>Schedule during which all protected apps must be locked.</summary>
+    public TimeSchedule LockSchedule { get; init; } = new() { Enabled = false, StartTime = "22:00", EndTime = "07:00" };
+
+    /// <summary>Schedule during which all protected apps stay unlocked without prompting.</summary>
+    public TimeSchedule UnlockSchedule { get; init; } = new() { Enabled = false, StartTime = "07:00", EndTime = "22:00" };
+
+    /// <summary>Schedule during which face unlock is disabled (falls back to PIN).</summary>
+    public TimeSchedule DisableFaceSchedule { get; init; } = new() { Enabled = false, StartTime = "23:00", EndTime = "06:00" };
+
+    /// <summary>Preferred video camera device ID for face capture.</summary>
+    public string? PreferredCameraId { get; init; }
+
+    /// <summary>Preferred camera device friendly name.</summary>
+    public string? PreferredCameraName { get; init; }
+
+    /// <summary>Multi-face enrollment profiles (up to 3 slots: e.g. Primary, Glasses/Alternate, Secondary).</summary>
+    public List<FaceProfile> FaceProfiles { get; init; } = new()
+    {
+        new FaceProfile { Slot = 1, Name = "Primary Face", Enrolled = true }
+    };
 
     public List<ProtectedApp> ProtectedApps { get; init; } = new();
 

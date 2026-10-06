@@ -23,6 +23,7 @@ public sealed class LockGateService : IDisposable
     readonly PinAuthenticator _pinAuth;
     readonly ProcessWatcher _processWatcher;
     readonly PowerSessionListener _powerListener;
+    readonly AuditLogStore _auditLogStore;
     bool _disposed;
 
     public event Action<ProcessInfo, IntPtr>? AuthenticationRequested;
@@ -76,9 +77,24 @@ public sealed class LockGateService : IDisposable
         _processWatcher.AuthenticationRequired += OnAuthenticationRequired;
 
         _powerListener = new PowerSessionListener(_engine, () => _registry.Config.LockOnWindowsLock);
+        _auditLogStore = new AuditLogStore(Path.Combine(dir, "audit_logs.json"));
 
         _processWatcher.Start();
     }
+
+    public void LogSecurityEvent(string eventType, string appId, string? processName = null, string? details = null, string? snapshotPath = null)
+    {
+        _auditLogStore.Append(new SecurityAuditLog
+        {
+            EventType = eventType,
+            AppId = appId,
+            ProcessName = processName,
+            Details = details,
+            SnapshotPath = snapshotPath
+        });
+    }
+
+    public List<SecurityAuditLog> GetRecentAuditLogs(int limit = 50) => _auditLogStore.LoadRecent(limit);
 
     void OnAuthenticationRequired(ProcessInfo process, IntPtr hwnd)
     {
@@ -173,6 +189,47 @@ public sealed class LockGateService : IDisposable
         _configStore.Save(newConfig);
         _registry.Update(newConfig);
         StateChanged?.Invoke();
+    }
+
+    public void UpdateSchedules(TimeSchedule lockSchedule, TimeSchedule unlockSchedule, TimeSchedule disableFaceSchedule)
+    {
+        var newConfig = Config with
+        {
+            LockSchedule = lockSchedule,
+            UnlockSchedule = unlockSchedule,
+            DisableFaceSchedule = disableFaceSchedule
+        };
+        _configStore.Save(newConfig);
+        _registry.Update(newConfig);
+        StateChanged?.Invoke();
+    }
+
+    public void UpdateCamera(string? cameraId, string? cameraName)
+    {
+        var newConfig = Config with
+        {
+            PreferredCameraId = cameraId,
+            PreferredCameraName = cameraName
+        };
+        _configStore.Save(newConfig);
+        _registry.Update(newConfig);
+        StateChanged?.Invoke();
+    }
+
+    public void UpdateFaceProfiles(List<FaceProfile> profiles)
+    {
+        var newConfig = Config with
+        {
+            FaceProfiles = profiles
+        };
+        _configStore.Save(newConfig);
+        _registry.Update(newConfig);
+        StateChanged?.Invoke();
+    }
+
+    public bool IsFaceUnlockDisabledNow()
+    {
+        return Config.DisableFaceSchedule?.IsActiveAt(DateTime.Now) == true;
     }
 
     public async Task<string> GetEffectiveSecurityMethodAsync()

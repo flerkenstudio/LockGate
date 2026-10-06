@@ -44,6 +44,17 @@ public sealed class AppLockEngine
         lock (_gate)
         {
             if (IsPaused()) return LockDecision.Allow;
+
+            var localNow = _time.GetLocalNow().DateTime;
+            if (_registry.Config.UnlockSchedule?.IsActiveAt(localNow) == true)
+                return LockDecision.Allow;
+
+            if (_registry.Config.LockSchedule?.IsActiveAt(localNow) == true)
+            {
+                // Strict lock schedule: active sessions are overridden
+                return LockDecision.RequireAuthentication;
+            }
+
             _sessions.AppDidFocus(app.AppId);
             if (_sessions.HasActiveSession(app.AppId)) return LockDecision.Allow;
             if (_recentUnlock.TryGetValue(app.AppId, out var t) && _time.GetElapsedTime(t) < UnlockCooldown)

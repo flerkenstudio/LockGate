@@ -48,7 +48,7 @@
             </Style>
 
             <!-- Modern Dark ComboBox Global Style -->
-            <Style TargetType="ComboBox">
+            <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
                 <Setter Property="ItemContainerStyle" Value="{StaticResource ModernComboBoxItem}" />
                 <Setter Property="Foreground" Value="#F8FAFC" />
                 <Setter Property="Background" Value="#0D1322" />
@@ -158,6 +158,8 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBoxStyle}" />
 
             <!-- macOS/iOS Style Toggle Switch -->
             <Style x:Key="ToggleSwitchStyle" TargetType="CheckBox">

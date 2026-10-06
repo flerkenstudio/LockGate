@@ -21,14 +21,27 @@ public partial class MainWindow : Window
 
     async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        LockGateService.Instance.StateChanged += OnStateChanged;
+        try
+        {
+            LockGateService.Instance.StateChanged += OnStateChanged;
 
-        RefreshAppsList();
-        LoadSettings();
-        await ScanSystemSecurityAsync();
-        UpdateStatusHeader();
-
-        _isInitializing = false;
+            RefreshAppsList();
+            LoadSettings();
+            await ScanSystemSecurityAsync();
+            await LoadCamerasAsync();
+            RefreshFaceProfiles();
+            UpdateStatusHeader();
+        }
+        catch (Exception ex)
+        {
+            var path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockGate", "crash.log");
+            try { System.IO.File.AppendAllText(path, $"[{DateTime.UtcNow}] Window_Loaded Error: {ex}\n\n"); } catch { }
+            MessageBox.Show($"Initialization Error: {ex.Message}\n\n{ex.StackTrace}", "LockGate Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
     }
 
     void OnStateChanged()
@@ -220,13 +233,15 @@ public partial class MainWindow : Window
         grid.Children.Add(infoStack);
 
         // Session mode badge
-        string sessionLabel = app.SessionMinutes switch
-        {
-            0 => "Immediate",
-            -1 => "Indefinite",
-            null => "Default (5m)",
-            var m => $"{m} Min"
-        };
+        string sessionLabel = app.LockWhenFocusLost && app.SessionMinutes != 0
+            ? "Focus Mode"
+            : app.SessionMinutes switch
+            {
+                0 => "Immediate",
+                -1 => "Indefinite",
+                null => "Default (5m)",
+                var m => $"{m} Min"
+            };
         var sessionBadge = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(22, 32, 54)),
@@ -344,6 +359,7 @@ public partial class MainWindow : Window
 
         var appId = Path.GetFileNameWithoutExtension(exeName).ToLowerInvariant();
 
+        bool isFocusMode = SessionModeCombo.SelectedIndex == 5;
         int? sessionMinutes = SessionModeCombo.SelectedIndex switch
         {
             0 => 0,   // Immediate
@@ -351,7 +367,8 @@ public partial class MainWindow : Window
             2 => 5,   // 5 Min
             3 => 15,  // 15 Min
             4 => 30,  // 30 Min
-            5 => -1,  // Indefinite
+            5 => 5,   // Focus Mode (5 min blur countdown)
+            6 => -1,  // Indefinite
             _ => 5
         };
 
@@ -362,7 +379,7 @@ public partial class MainWindow : Window
             ExecutablePath = exePath,
             Enabled = true,
             SessionMinutes = sessionMinutes,
-            LockWhenFocusLost = (sessionMinutes == 0)
+            LockWhenFocusLost = isFocusMode || (sessionMinutes == 0)
         };
 
         LockGateService.Instance.AddOrUpdateApp(newApp);
@@ -408,6 +425,238 @@ public partial class MainWindow : Window
         }
     }
 
+    sealed class CameraItem
+    {
+        public string? Id { get; init; }
+        public required string DisplayName { get; init; }
+        public override string ToString() => DisplayName;
+    }
+
+    async Task LoadCamerasAsync()
+    {
+        if (CameraPickerCombo == null) return;
+
+        CameraPickerCombo.Items.Clear();
+        CameraPickerCombo.Items.Add(new CameraItem { Id = null, DisplayName = "Default System Camera (Automatic)" });
+
+        try
+        {
+            var devices = await Windows.Devices.Enumeration.DeviceInformation.FindAllAsync(
+                Windows.Devices.Enumeration.DeviceClass.VideoCapture);
+
+            foreach (var dev in devices)
+            {
+                if (dev.IsEnabled)
+                {
+                    CameraPickerCombo.Items.Add(new CameraItem { Id = dev.Id, DisplayName = dev.Name });
+                }
+            }
+        }
+        catch
+        {
+            // Device enumeration handled gracefully
+        }
+
+        var savedCamId = LockGateService.Instance.Config.PreferredCameraId;
+        int selectIdx = 0;
+        if (!string.IsNullOrEmpty(savedCamId))
+        {
+            for (int i = 1; i < CameraPickerCombo.Items.Count; i++)
+            {
+                if (CameraPickerCombo.Items[i] is CameraItem item && item.Id == savedCamId)
+                {
+                    selectIdx = i;
+                    break;
+                }
+            }
+        }
+
+        CameraPickerCombo.SelectedIndex = selectIdx;
+    }
+
+    void CameraPickerCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isInitializing || CameraPickerCombo.SelectedItem is not CameraItem selected) return;
+        LockGateService.Instance.UpdateCamera(selected.Id, selected.Id == null ? null : selected.DisplayName);
+    }
+
+    async void RefreshCameras_Click(object sender, RoutedEventArgs e)
+    {
+        await LoadCamerasAsync();
+    }
+
+    void OpenWindowsHelloSettings_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "ms-settings:signinoptions",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open Windows Sign-in options: {ex.Message}", "LockGate", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    void RefreshFaceProfiles()
+    {
+        if (FaceProfilesContainer == null) return;
+        FaceProfilesContainer.Children.Clear();
+
+        var config = LockGateService.Instance.Config;
+        var existingProfiles = config.FaceProfiles ?? new();
+
+        for (int slot = 1; slot <= 3; slot++)
+        {
+            var profile = existingProfiles.FirstOrDefault(p => p.Slot == slot);
+            FaceProfilesContainer.Children.Add(CreateFaceSlotCard(slot, profile));
+        }
+    }
+
+    Border CreateFaceSlotCard(int slot, FaceProfile? profile)
+    {
+        var isEnrolled = profile != null && profile.Enrolled;
+        var border = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(13, 19, 34)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(34, 48, 74)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(14, 10, 14, 10),
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        // Slot Badge
+        var slotBadge = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(30, 41, 59)),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(8, 4, 8, 4),
+            Margin = new Thickness(0, 0, 12, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        slotBadge.Child = new TextBlock
+        {
+            Text = $"Slot {slot}",
+            FontWeight = FontWeights.Bold,
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184))
+        };
+        Grid.SetColumn(slotBadge, 0);
+        grid.Children.Add(slotBadge);
+
+        // Details
+        var details = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        var defaultName = slot switch
+        {
+            1 => "Primary Face (Standard)",
+            2 => "Alternate Look (Glasses / Hat)",
+            _ => "Secondary User Profile"
+        };
+        var nameText = new TextBlock
+        {
+            Text = profile?.Name ?? defaultName,
+            FontWeight = FontWeights.SemiBold,
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.FromRgb(248, 250, 252))
+        };
+        var statusText = new TextBlock
+        {
+            Text = isEnrolled ? $"Active • Enrolled {profile!.EnrolledAt.ToLocalTime():yyyy-MM-dd}" : "Empty • Slot available for alternate look",
+            FontSize = 11,
+            Foreground = new SolidColorBrush(isEnrolled ? Color.FromRgb(52, 211, 153) : Color.FromRgb(100, 116, 139)),
+            Margin = new Thickness(0, 2, 0, 0)
+        };
+        details.Children.Add(nameText);
+        details.Children.Add(statusText);
+        Grid.SetColumn(details, 1);
+        grid.Children.Add(details);
+
+        // Action Buttons
+        var actionStack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        if (isEnrolled)
+        {
+            if (slot > 1) // Slot 1 is Primary, keep it always enrolled
+            {
+                var removeBtn = new Button
+                {
+                    Content = "Remove",
+                    Style = (Style)FindResource("DangerButton"),
+                    Height = 28,
+                    Padding = new Thickness(10, 2, 10, 2),
+                    FontSize = 11,
+                    Margin = new Thickness(6, 0, 0, 0)
+                };
+                removeBtn.Click += (_, _) =>
+                {
+                    var config = LockGateService.Instance.Config;
+                    var updated = config.FaceProfiles.Where(p => p.Slot != slot).ToList();
+                    LockGateService.Instance.UpdateFaceProfiles(updated);
+                    RefreshFaceProfiles();
+                };
+                actionStack.Children.Add(removeBtn);
+            }
+            else
+            {
+                var verifiedBadge = new TextBlock
+                {
+                    Text = "✓ Enrolled",
+                    FontSize = 11,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153)),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                actionStack.Children.Add(verifiedBadge);
+            }
+        }
+        else
+        {
+            var enrollBtn = new Button
+            {
+                Content = "+ Enroll Slot",
+                Style = (Style)FindResource("PrimaryButton"),
+                Height = 28,
+                Padding = new Thickness(10, 2, 10, 2),
+                FontSize = 11
+            };
+            enrollBtn.Click += async (_, _) =>
+            {
+                var verified = await WindowsHelloService.VerifyAsync($"Enroll Biometric Appearance for Slot {slot}");
+                if (verified)
+                {
+                    var config = LockGateService.Instance.Config;
+                    var list = new List<FaceProfile>(config.FaceProfiles);
+                    list.RemoveAll(p => p.Slot == slot);
+                    list.Add(new FaceProfile
+                    {
+                        Slot = slot,
+                        Name = defaultName,
+                        Enrolled = true,
+                        EnrolledAt = DateTime.UtcNow
+                    });
+                    LockGateService.Instance.UpdateFaceProfiles(list);
+                    RefreshFaceProfiles();
+                    MessageBox.Show($"Biometric profile for Slot {slot} ({defaultName}) registered successfully!", "LockGate", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            };
+            actionStack.Children.Add(enrollBtn);
+        }
+
+        Grid.SetColumn(actionStack, 2);
+        grid.Children.Add(actionStack);
+
+        border.Child = grid;
+        return border;
+    }
+
     void LoadSettings()
     {
         var config = LockGateService.Instance.Config;
@@ -424,6 +673,10 @@ public partial class MainWindow : Window
         }
 
         LockOnWindowsLockCheck.IsChecked = config.LockOnWindowsLock;
+
+        ScheduleLockCheck.IsChecked = config.LockSchedule?.Enabled ?? false;
+        ScheduleUnlockCheck.IsChecked = config.UnlockSchedule?.Enabled ?? false;
+        DisableFaceScheduleCheck.IsChecked = config.DisableFaceSchedule?.Enabled ?? false;
     }
 
     void SessionTimeoutSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -450,7 +703,23 @@ public partial class MainWindow : Window
         var lockOnLock = LockOnWindowsLockCheck.IsChecked == true;
         LockGateService.Instance.UpdateGeneralSettings(defaultSession, lockOnLock);
 
-        MessageBox.Show("Settings saved successfully.", "LockGate", MessageBoxButton.OK, MessageBoxImage.Information);
+        var curConfig = LockGateService.Instance.Config;
+        var lockSchedule = (curConfig.LockSchedule ?? new TimeSchedule { StartTime = "22:00", EndTime = "07:00" }) with
+        {
+            Enabled = ScheduleLockCheck.IsChecked == true
+        };
+        var unlockSchedule = (curConfig.UnlockSchedule ?? new TimeSchedule { StartTime = "07:00", EndTime = "22:00" }) with
+        {
+            Enabled = ScheduleUnlockCheck.IsChecked == true
+        };
+        var disableFaceSchedule = (curConfig.DisableFaceSchedule ?? new TimeSchedule { StartTime = "23:00", EndTime = "06:00" }) with
+        {
+            Enabled = DisableFaceScheduleCheck.IsChecked == true
+        };
+
+        LockGateService.Instance.UpdateSchedules(lockSchedule, unlockSchedule, disableFaceSchedule);
+
+        MessageBox.Show("Settings and schedules saved successfully.", "LockGate", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     void PauseResume_Click(object sender, RoutedEventArgs e)
@@ -495,6 +764,7 @@ public partial class MainWindow : Window
         SecurityView.Visibility = Visibility.Collapsed;
         SettingsView.Visibility = Visibility.Collapsed;
         if (AboutView != null) AboutView.Visibility = Visibility.Collapsed;
+        if (AuditLogsView != null) AuditLogsView.Visibility = Visibility.Collapsed;
 
         if (TabApps.IsChecked == true)
         {
@@ -514,12 +784,187 @@ public partial class MainWindow : Window
             if (PageTitleText != null) PageTitleText.Text = "Behavior";
             if (PageSubtitleText != null) PageSubtitleText.Text = "Adjust launch, locking, schedules, and emergency controls.";
         }
+        else if (TabAuditLogs != null && TabAuditLogs.IsChecked == true)
+        {
+            if (AuditLogsView != null) AuditLogsView.Visibility = Visibility.Visible;
+            if (PageTitleText != null) PageTitleText.Text = "Security Audit Logs";
+            if (PageSubtitleText != null) PageSubtitleText.Text = "Real-time authentication event stream, failed attempts, and intruder snapshots.";
+            RefreshAuditLogs();
+        }
         else if (TabAbout != null && TabAbout.IsChecked == true)
         {
             if (AboutView != null) AboutView.Visibility = Visibility.Visible;
             if (PageTitleText != null) PageTitleText.Text = "About";
             if (PageSubtitleText != null) PageSubtitleText.Text = "LockGate for Windows system architecture and security standards.";
         }
+    }
+
+    void RefreshAuditLogs_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshAuditLogs();
+    }
+
+    void OpenSnapshotsFolder_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var folder = IntruderCaptureService.GetSnapshotsDirectory();
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = folder,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Could not open snapshots directory: {ex.Message}", "LockGate", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    void RefreshAuditLogs()
+    {
+        if (AuditLogsContainer == null) return;
+        AuditLogsContainer.Children.Clear();
+
+        var logs = LockGateService.Instance.GetRecentAuditLogs(100);
+        if (AuditLogsCountText != null) AuditLogsCountText.Text = $"({logs.Count} events)";
+
+        if (logs.Count == 0)
+        {
+            var emptyText = new TextBlock
+            {
+                Text = "No security events recorded yet. Authentication attempts and unlocks will appear here in real-time.",
+                Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                FontSize = 13,
+                Margin = new Thickness(0, 24, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            AuditLogsContainer.Children.Add(emptyText);
+            return;
+        }
+
+        foreach (var log in logs)
+        {
+            AuditLogsContainer.Children.Add(CreateAuditLogRow(log));
+        }
+    }
+
+    Border CreateAuditLogRow(SecurityAuditLog log)
+    {
+        var border = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(13, 19, 34)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(30, 41, 59)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(14, 10, 14, 10),
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140, GridUnitType.Pixel) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        // Column 0: Timestamp
+        var timeText = new TextBlock
+        {
+            Text = log.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(timeText, 0);
+        grid.Children.Add(timeText);
+
+        // Column 1: Event Type Badge
+        var (badgeBg, badgeFg, badgeBorder, badgeText) = log.EventType switch
+        {
+            "SuccessUnlock" => (Color.FromRgb(6, 78, 59), Color.FromRgb(52, 211, 153), Color.FromRgb(5, 150, 105), "Unlocked"),
+            "FailedPin" => (Color.FromRgb(127, 29, 29), Color.FromRgb(248, 113, 113), Color.FromRgb(220, 38, 38), "Wrong PIN"),
+            "FailedHello" => (Color.FromRgb(127, 29, 29), Color.FromRgb(248, 113, 113), Color.FromRgb(220, 38, 38), "Hello Failed"),
+            "PinLockedOut" => (Color.FromRgb(127, 29, 29), Color.FromRgb(252, 165, 165), Color.FromRgb(239, 68, 68), "Lockout"),
+            "AppLocked" => (Color.FromRgb(30, 58, 138), Color.FromRgb(96, 165, 250), Color.FromRgb(37, 99, 235), "App Locked"),
+            _ => (Color.FromRgb(30, 41, 59), Color.FromRgb(203, 213, 225), Color.FromRgb(51, 65, 85), log.EventType)
+        };
+
+        var badge = new Border
+        {
+            Background = new SolidColorBrush(badgeBg),
+            BorderBrush = new SolidColorBrush(badgeBorder),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(8, 2, 8, 2),
+            Margin = new Thickness(10, 0, 12, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        badge.Child = new TextBlock
+        {
+            Text = badgeText,
+            Foreground = new SolidColorBrush(badgeFg),
+            FontSize = 11,
+            FontWeight = FontWeights.SemiBold
+        };
+        Grid.SetColumn(badge, 1);
+        grid.Children.Add(badge);
+
+        // Column 2: App & Details
+        var detailsStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 10, 0) };
+        var appNameText = new TextBlock
+        {
+            Text = string.IsNullOrEmpty(log.AppId) ? "System" : log.AppId,
+            FontWeight = FontWeights.SemiBold,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.FromRgb(241, 245, 249))
+        };
+        detailsStack.Children.Add(appNameText);
+
+        if (!string.IsNullOrEmpty(log.Details))
+        {
+            var detailSubText = new TextBlock
+            {
+                Text = log.Details,
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            detailsStack.Children.Add(detailSubText);
+        }
+        Grid.SetColumn(detailsStack, 2);
+        grid.Children.Add(detailsStack);
+
+        // Column 3: Snapshot indicator / button if available
+        if (!string.IsNullOrEmpty(log.SnapshotPath) && File.Exists(log.SnapshotPath))
+        {
+            var snapBtn = new Button
+            {
+                Content = "📷 Photo",
+                Style = (Style)FindResource("SecondaryButton"),
+                Height = 26,
+                Padding = new Thickness(8, 2, 8, 2),
+                FontSize = 11,
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = "View intruder webcam capture"
+            };
+            var snapPath = log.SnapshotPath;
+            snapBtn.Click += (_, _) =>
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo { FileName = snapPath, UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to open photo: {ex.Message}", "LockGate", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            };
+            Grid.SetColumn(snapBtn, 3);
+            grid.Children.Add(snapBtn);
+        }
+
+        border.Child = grid;
+        return border;
     }
 
     void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
