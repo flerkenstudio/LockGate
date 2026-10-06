@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <img src="src/LockGate.App/Assets/logo_symbol.png" alt="LockGate Logo" width="150" />
   
   # LockGate for Windows
@@ -67,3 +67,16 @@ LockGate is an application locker and **not** a replacement for Windows sign-in,
 
 ## 📜 License
 This project is open-source. Please add your own LICENSE file before distributing.
+
+---
+
+## 💡 Acknowledgements & Inspiration
+* Inspired by [**FaceGate-Mac**](https://github.com/dweep-desai/FaceGate-Mac) by [dweep-desai](https://github.com/dweep-desai) — big credit for the concept and bringing the seamless app-locking experience to Windows!
+
+---
+
+## ☕ Support
+If you enjoy using LockGate and want to support continued development, you can buy us a coffee:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support%20Us-yellow?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/flerken)
+

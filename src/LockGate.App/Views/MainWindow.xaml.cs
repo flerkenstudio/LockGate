@@ -56,7 +56,7 @@ public partial class MainWindow : Window
     async Task ScanSystemSecurityAsync()
     {
         WindowsHelloStatusText.Text = "Scanning...";
-        WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(56, 189, 248));
+        WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(37, 99, 235));
 
         var helloAvailable = await WindowsHelloService.IsAvailableAsync();
         var effective = await LockGateService.Instance.GetEffectiveSecurityMethodAsync();
@@ -64,12 +64,12 @@ public partial class MainWindow : Window
         if (helloAvailable)
         {
             WindowsHelloStatusText.Text = "Available & Configured (Face / Fingerprint / PIN)";
-            WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
+            WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(21, 128, 61));
 
-            ScanBadge.Background = new SolidColorBrush(Color.FromRgb(6, 78, 59));
-            ScanBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(5, 150, 105));
+            ScanBadge.Background = new SolidColorBrush(Color.FromRgb(220, 252, 231));
+            ScanBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(134, 239, 172));
             ScanBadgeText.Text = "✓ Windows Hello Ready";
-            ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
+            ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(21, 128, 61));
 
             ScanExplanationText.Text = "Your PC supports Windows Hello. It is selected as your primary unlock method.";
 
@@ -86,12 +86,12 @@ public partial class MainWindow : Window
         else
         {
             WindowsHelloStatusText.Text = "Not Detected or Not Set Up";
-            WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+            WindowsHelloStatusText.Foreground = new SolidColorBrush(Color.FromRgb(180, 83, 9));
 
-            ScanBadge.Background = new SolidColorBrush(Color.FromRgb(120, 53, 15));
-            ScanBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+            ScanBadge.Background = new SolidColorBrush(Color.FromRgb(254, 243, 199));
+            ScanBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(253, 230, 138));
             ScanBadgeText.Text = "⚠ Master PIN Active";
-            ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(251, 191, 36));
+            ScanBadgeText.Foreground = new SolidColorBrush(Color.FromRgb(180, 83, 9));
 
             ScanExplanationText.Text = "Windows Hello is not set up on this account. Master PIN will be used to unlock applications.";
 
@@ -135,18 +135,18 @@ public partial class MainWindow : Window
 
         if (service.IsPaused)
         {
-            StatusPill.Background = new SolidColorBrush(Color.FromRgb(120, 53, 15));
-            StatusPill.BorderBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+            StatusPill.Background = new SolidColorBrush(Color.FromRgb(254, 243, 199));
+            StatusPill.BorderBrush = new SolidColorBrush(Color.FromRgb(253, 230, 138));
             StatusPillText.Text = "Protection Paused";
-            StatusPillText.Foreground = new SolidColorBrush(Color.FromRgb(251, 191, 36));
+            StatusPillText.Foreground = new SolidColorBrush(Color.FromRgb(180, 83, 9));
             PauseResumeButton.Content = "▶ Resume Protection";
         }
         else
         {
-            StatusPill.Background = new SolidColorBrush(Color.FromRgb(6, 78, 59));
-            StatusPill.BorderBrush = new SolidColorBrush(Color.FromRgb(5, 150, 105));
+            StatusPill.Background = new SolidColorBrush(Color.FromRgb(220, 252, 231));
+            StatusPill.BorderBrush = new SolidColorBrush(Color.FromRgb(134, 239, 172));
             StatusPillText.Text = $"Protected ({methodLabel})";
-            StatusPillText.Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153));
+            StatusPillText.Foreground = new SolidColorBrush(Color.FromRgb(21, 128, 61));
             PauseResumeButton.Content = "⏸ Pause 5m";
         }
     }
@@ -182,8 +182,8 @@ public partial class MainWindow : Window
     {
         var border = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(13, 19, 34)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(34, 48, 74)),
+            Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(226, 232, 240)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(10),
             Padding = new Thickness(16, 12, 16, 12),
@@ -204,13 +204,13 @@ public partial class MainWindow : Window
             Text = app.AppId,
             FontWeight = FontWeights.SemiBold,
             FontSize = 14,
-            Foreground = new SolidColorBrush(Color.FromRgb(248, 250, 252))
+            Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42))
         };
         var exeText = new TextBlock
         {
             Text = $"({app.Executable})",
             FontSize = 12,
-            Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+            Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139)),
             Margin = new Thickness(6, 2, 0, 0)
         };
         titleStack.Children.Add(titleText);
@@ -244,8 +244,8 @@ public partial class MainWindow : Window
             };
         var sessionBadge = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(22, 32, 54)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(34, 48, 74)),
+            Background = new SolidColorBrush(Color.FromRgb(241, 245, 249)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(226, 232, 240)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(10, 5, 10, 5),
@@ -255,7 +255,7 @@ public partial class MainWindow : Window
             {
                 Text = $"⏱ {sessionLabel}",
                 FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                Foreground = new SolidColorBrush(Color.FromRgb(71, 85, 105)),
                 FontWeight = FontWeights.Medium
             }
         };
@@ -521,8 +521,8 @@ public partial class MainWindow : Window
         var isEnrolled = profile != null && profile.Enrolled;
         var border = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(13, 19, 34)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(34, 48, 74)),
+            Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(226, 232, 240)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(14, 10, 14, 10),
@@ -537,7 +537,9 @@ public partial class MainWindow : Window
         // Slot Badge
         var slotBadge = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(30, 41, 59)),
+            Background = new SolidColorBrush(Color.FromRgb(241, 245, 249)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(226, 232, 240)),
+            BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
             Padding = new Thickness(8, 4, 8, 4),
             Margin = new Thickness(0, 0, 12, 0),
@@ -548,7 +550,7 @@ public partial class MainWindow : Window
             Text = $"Slot {slot}",
             FontWeight = FontWeights.Bold,
             FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184))
+            Foreground = new SolidColorBrush(Color.FromRgb(71, 85, 105))
         };
         Grid.SetColumn(slotBadge, 0);
         grid.Children.Add(slotBadge);
@@ -566,13 +568,13 @@ public partial class MainWindow : Window
             Text = profile?.Name ?? defaultName,
             FontWeight = FontWeights.SemiBold,
             FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(248, 250, 252))
+            Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42))
         };
         var statusText = new TextBlock
         {
             Text = isEnrolled ? $"Active • Enrolled {profile!.EnrolledAt.ToLocalTime():yyyy-MM-dd}" : "Empty • Slot available for alternate look",
             FontSize = 11,
-            Foreground = new SolidColorBrush(isEnrolled ? Color.FromRgb(52, 211, 153) : Color.FromRgb(100, 116, 139)),
+            Foreground = new SolidColorBrush(isEnrolled ? Color.FromRgb(21, 128, 61) : Color.FromRgb(100, 116, 139)),
             Margin = new Thickness(0, 2, 0, 0)
         };
         details.Children.Add(nameText);
@@ -611,7 +613,7 @@ public partial class MainWindow : Window
                     Text = "✓ Enrolled",
                     FontSize = 11,
                     FontWeight = FontWeights.SemiBold,
-                    Foreground = new SolidColorBrush(Color.FromRgb(52, 211, 153)),
+                    Foreground = new SolidColorBrush(Color.FromRgb(21, 128, 61)),
                     VerticalAlignment = VerticalAlignment.Center
                 };
                 actionStack.Children.Add(verifiedBadge);
@@ -853,8 +855,8 @@ public partial class MainWindow : Window
     {
         var border = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(13, 19, 34)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(30, 41, 59)),
+            Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(226, 232, 240)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(14, 10, 14, 10),
@@ -872,21 +874,21 @@ public partial class MainWindow : Window
         {
             Text = log.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
             FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+            Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139)),
             VerticalAlignment = VerticalAlignment.Center
         };
         Grid.SetColumn(timeText, 0);
         grid.Children.Add(timeText);
 
-        // Column 1: Event Type Badge
+        // Column 1: Event Type Badge (Light pastel aesthetic)
         var (badgeBg, badgeFg, badgeBorder, badgeText) = log.EventType switch
         {
-            "SuccessUnlock" => (Color.FromRgb(6, 78, 59), Color.FromRgb(52, 211, 153), Color.FromRgb(5, 150, 105), "Unlocked"),
-            "FailedPin" => (Color.FromRgb(127, 29, 29), Color.FromRgb(248, 113, 113), Color.FromRgb(220, 38, 38), "Wrong PIN"),
-            "FailedHello" => (Color.FromRgb(127, 29, 29), Color.FromRgb(248, 113, 113), Color.FromRgb(220, 38, 38), "Hello Failed"),
-            "PinLockedOut" => (Color.FromRgb(127, 29, 29), Color.FromRgb(252, 165, 165), Color.FromRgb(239, 68, 68), "Lockout"),
-            "AppLocked" => (Color.FromRgb(30, 58, 138), Color.FromRgb(96, 165, 250), Color.FromRgb(37, 99, 235), "App Locked"),
-            _ => (Color.FromRgb(30, 41, 59), Color.FromRgb(203, 213, 225), Color.FromRgb(51, 65, 85), log.EventType)
+            "SuccessUnlock" => (Color.FromRgb(220, 252, 231), Color.FromRgb(21, 128, 61), Color.FromRgb(134, 239, 172), "Unlocked"),
+            "FailedPin" => (Color.FromRgb(254, 226, 226), Color.FromRgb(185, 28, 28), Color.FromRgb(252, 165, 165), "Wrong PIN"),
+            "FailedHello" => (Color.FromRgb(254, 226, 226), Color.FromRgb(185, 28, 28), Color.FromRgb(252, 165, 165), "Hello Failed"),
+            "PinLockedOut" => (Color.FromRgb(254, 226, 226), Color.FromRgb(185, 28, 28), Color.FromRgb(248, 113, 113), "Lockout"),
+            "AppLocked" => (Color.FromRgb(239, 246, 255), Color.FromRgb(29, 78, 216), Color.FromRgb(191, 219, 254), "App Locked"),
+            _ => (Color.FromRgb(241, 245, 249), Color.FromRgb(71, 85, 105), Color.FromRgb(226, 232, 240), log.EventType)
         };
 
         var badge = new Border
@@ -916,7 +918,7 @@ public partial class MainWindow : Window
             Text = string.IsNullOrEmpty(log.AppId) ? "System" : log.AppId,
             FontWeight = FontWeights.SemiBold,
             FontSize = 12,
-            Foreground = new SolidColorBrush(Color.FromRgb(241, 245, 249))
+            Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42))
         };
         detailsStack.Children.Add(appNameText);
 
@@ -926,7 +928,7 @@ public partial class MainWindow : Window
             {
                 Text = log.Details,
                 FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139)),
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
             detailsStack.Children.Add(detailSubText);

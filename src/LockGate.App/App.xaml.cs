@@ -12,6 +12,7 @@ public partial class App : System.Windows.Application
     const string MutexName = "LockGate_Windows_SingleInstance_Mutex";
     const string EventName = "LockGate_Windows_ShowDashboard_Event";
     Mutex? _singleInstanceMutex;
+    bool _hasMutexOwnership;
     EventWaitHandle? _showDashboardEvent;
     RegisteredWaitHandle? _registeredWait;
     Forms.NotifyIcon? _trayIcon;
@@ -65,9 +66,14 @@ public partial class App : System.Windows.Application
             }
             catch { }
 
+            _singleInstanceMutex.Dispose();
+            _singleInstanceMutex = null;
+
             Shutdown();
             return;
         }
+
+        _hasMutexOwnership = true;
 
         try
         {
@@ -227,8 +233,16 @@ public partial class App : System.Windows.Application
 
         if (_singleInstanceMutex != null)
         {
-            _singleInstanceMutex.ReleaseMutex();
+            if (_hasMutexOwnership)
+            {
+                try
+                {
+                    _singleInstanceMutex.ReleaseMutex();
+                }
+                catch { /* Ignore */ }
+            }
             _singleInstanceMutex.Dispose();
+            _singleInstanceMutex = null;
         }
 
         base.OnExit(e);

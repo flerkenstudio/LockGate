@@ -5,557 +5,563 @@
         Height="680" Width="920"
         MinHeight="600" MinWidth="780"
         WindowStartupLocation="CenterScreen"
-        Background="#080D1A"
-        Foreground="#F8FAFC"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Foreground="#0F172A"
         Closing="Window_Closing"
         Loaded="Window_Loaded">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="44" ResizeBorderThickness="6" CornerRadius="12" GlassFrameThickness="0" />
+        <WindowChrome CaptionHeight="48" ResizeBorderThickness="6" CornerRadius="16" GlassFrameThickness="0" />
     </WindowChrome.WindowChrome>
 
-    <Grid Background="#080D1A">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" /> <!-- Left Sidebar -->
-            <ColumnDefinition Width="*" />   <!-- Main Content Panel -->
-        </Grid.ColumnDefinitions>
+    <!-- Translucent Frosted Glass Root Container -->
+    <Border Background="#F4F8FAFC"
+            BorderBrush="#D0E2E8F0"
+            BorderThickness="1"
+            CornerRadius="16"
+            ClipToBounds="True">
+        <Border.Effect>
+            <DropShadowEffect Color="#0F172A" BlurRadius="30" ShadowDepth="6" Opacity="0.12" />
+        </Border.Effect>
 
-        <!-- ================= LEFT SIDEBAR ================= -->
-        <Border Grid.Column="0" Background="#0E1424" BorderBrush="#1A2438" BorderThickness="0,0,1,0">
-            <Grid Margin="16,20,16,16">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" /> <!-- Brand Header -->
-                    <RowDefinition Height="Auto" /> <!-- Category Label -->
-                    <RowDefinition Height="*" />    <!-- Navigation RadioButtons -->
-                    <RowDefinition Height="Auto" /> <!-- Footer Status -->
-                </Grid.RowDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" /> <!-- Left Sidebar -->
+                <ColumnDefinition Width="*" />   <!-- Main Content Panel -->
+            </Grid.ColumnDefinitions>
 
-                <!-- Brand Header -->
-                <StackPanel Grid.Row="0" Margin="4,0,0,24">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="36" Height="36" CornerRadius="10" Background="#131C2E" BorderBrush="#2563EB" BorderThickness="1.5" Margin="0,0,10,0">
-                            <Image Source="/LockGate.App;component/Assets/logo_symbol.png" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="LockGate" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" />
-                            <TextBlock Text="Settings" FontSize="12" Foreground="#94A3B8" Margin="0,-2,0,0" />
+            <!-- ================= LEFT SIDEBAR (Frosted Tint) ================= -->
+            <Border Grid.Column="0" Background="#EAEFF6" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
+                <Grid Margin="16,20,16,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" /> <!-- Brand Header -->
+                        <RowDefinition Height="Auto" /> <!-- Category Label -->
+                        <RowDefinition Height="*" />    <!-- Navigation RadioButtons -->
+                        <RowDefinition Height="Auto" /> <!-- Footer Status -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Brand Header -->
+                    <StackPanel Grid.Row="0" Margin="4,0,0,24">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="36" Height="36" CornerRadius="10" Background="#EFF6FF" BorderBrush="#2563EB" BorderThickness="1.5" Margin="0,0,10,0">
+                                <Image Source="/LockGate.App;component/Assets/logo_symbol.png" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="LockGate" FontSize="18" FontWeight="Bold" Foreground="#0F172A" />
+                                <TextBlock Text="Settings" FontSize="12" Foreground="#64748B" Margin="0,-2,0,0" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
-                </StackPanel>
 
-                <!-- Preferences Category Title -->
-                <TextBlock Grid.Row="1" Text="Preferences" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="8,0,0,10" />
+                    <!-- Preferences Category Title -->
+                    <TextBlock Grid.Row="1" Text="Preferences" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="8,0,0,10" />
 
-                <!-- Sidebar Nav Items -->
-                <StackPanel Grid.Row="2">
-                    <RadioButton x:Name="TabApps" Style="{StaticResource SidebarTabStyle}" IsChecked="True" Checked="NavTab_Checked">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🔒" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
-                            <TextBlock Text="Locked Apps" FontSize="13" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </RadioButton>
+                    <!-- Sidebar Nav Items -->
+                    <StackPanel Grid.Row="2">
+                        <RadioButton x:Name="TabApps" Style="{StaticResource SidebarTabStyle}" IsChecked="True" Checked="NavTab_Checked">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔒" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Locked Apps" FontSize="13" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </RadioButton>
 
-                    <RadioButton x:Name="TabSecurity" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="👤" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
-                            <TextBlock Text="Authentication" FontSize="13" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </RadioButton>
+                        <RadioButton x:Name="TabSecurity" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="👤" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Authentication" FontSize="13" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </RadioButton>
 
-                    <RadioButton x:Name="TabSettings" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⚙️" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
-                            <TextBlock Text="Behavior" FontSize="13" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </RadioButton>
+                        <RadioButton x:Name="TabSettings" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚙️" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Behavior" FontSize="13" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </RadioButton>
 
-                    <RadioButton x:Name="TabAuditLogs" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="📋" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
-                            <TextBlock Text="Audit Logs" FontSize="13" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </RadioButton>
+                        <RadioButton x:Name="TabAuditLogs" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📋" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Audit Logs" FontSize="13" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </RadioButton>
 
-                    <RadioButton x:Name="TabAbout" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="ℹ️" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
-                            <TextBlock Text="About" FontSize="13" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </RadioButton>
-                </StackPanel>
-
-                <!-- Footer Status Pill -->
-                <Border Grid.Row="3" x:Name="StatusPill" CornerRadius="12" Background="#064E3B" BorderBrush="#059669" BorderThickness="1" Padding="10,6" Margin="0,12,0,0">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🛡️" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
-                        <TextBlock x:Name="StatusPillText" Text="Protected" Foreground="#34D399" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="170" />
+                        <RadioButton x:Name="TabAbout" Style="{StaticResource SidebarTabStyle}" Checked="NavTab_Checked">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="ℹ️" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock Text="About" FontSize="13" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </RadioButton>
                     </StackPanel>
-                </Border>
-            </Grid>
-        </Border>
 
-        <!-- ================= MAIN CONTENT AREA ================= -->
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="54" />  <!-- Custom Window Top Header & Actions -->
-                <RowDefinition Height="Auto" /> <!-- Dynamic Page Title Banner -->
-                <RowDefinition Height="*" />    <!-- Active View Area -->
-                <RowDefinition Height="Auto" /> <!-- Bottom Status Bar -->
-            </Grid.RowDefinitions>
-
-            <!-- Custom Top Bar with Actions & Window Controls -->
-            <Border Grid.Row="0" Background="#080D1A" Padding="24,10,16,10">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Left drag space for WindowChrome -->
-                    <Rectangle Fill="Transparent" WindowChrome.IsHitTestVisibleInChrome="False" />
-
-                    <!-- Top Action Buttons & Window Caption Controls -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Button x:Name="PauseResumeButton" Content="⏸ Pause 5m" Style="{StaticResource SecondaryButton}" Height="32" Padding="10,4" Margin="0,0,8,0" Click="PauseResume_Click" />
-                        <Button Content="🔒 Lock All" Style="{StaticResource PrimaryButton}" Height="32" Padding="10,4" Margin="0,0,16,0" Click="LockAll_Click" />
-
-                        <!-- Window Controls (Minimize / Maximize / Close) -->
-                        <Button Width="32" Height="32" Style="{StaticResource SecondaryButton}" Content="─" FontSize="11" Padding="0" Margin="0,0,4,0" Click="Minimize_Click" ToolTip="Minimize" />
-                        <Button Width="32" Height="32" Style="{StaticResource SecondaryButton}" Content="☐" FontSize="11" Padding="0" Margin="0,0,4,0" Click="Maximize_Click" ToolTip="Maximize" />
-                        <Button Width="32" Height="32" Style="{StaticResource DangerButton}" Content="✕" FontSize="12" Padding="0" Click="Close_Click" ToolTip="Close" />
-                    </StackPanel>
+                    <!-- Footer Status Pill -->
+                    <Border Grid.Row="3" x:Name="StatusPill" CornerRadius="12" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" Padding="10,6" Margin="0,12,0,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🛡️" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="StatusPillText" Text="Protected" Foreground="#15803D" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="170" />
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Border>
 
-            <!-- Dynamic Page Title Banner -->
-            <Border Grid.Row="1" Padding="24,6,24,16">
-                <StackPanel>
-                    <TextBlock x:Name="PageTitleText" Text="Locked Apps" FontSize="26" FontWeight="Bold" Foreground="#FFFFFF" />
-                    <TextBlock x:Name="PageSubtitleText" Text="Manage protected applications, session durations, and instant lock rules." FontSize="13" Foreground="#94A3B8" Margin="0,4,0,0" />
-                </StackPanel>
-            </Border>
+            <!-- ================= MAIN CONTENT AREA ================= -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="54" />  <!-- Custom Window Top Header & Actions -->
+                    <RowDefinition Height="Auto" /> <!-- Dynamic Page Title Banner -->
+                    <RowDefinition Height="*" />    <!-- Active View Area -->
+                    <RowDefinition Height="Auto" /> <!-- Bottom Status Bar -->
+                </Grid.RowDefinitions>
 
-            <!-- Active View Content -->
-            <Grid Grid.Row="2" Margin="24,0,24,16">
+                <!-- Custom Top Bar with Actions & Window Controls -->
+                <Border Grid.Row="0" Background="Transparent" Padding="24,10,16,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                <!-- ================= TAB 1: LOCKED APPS VIEW ================= -->
-                <Grid x:Name="AppsView" Visibility="Visible">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                        <!-- Left drag space for WindowChrome -->
+                        <Rectangle Fill="Transparent" WindowChrome.IsHitTestVisibleInChrome="False" />
 
-                    <!-- Add Application Card -->
-                    <Border Grid.Row="0" Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,16">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                        <!-- Top Action Buttons & Window Caption Controls -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button x:Name="PauseResumeButton" Content="⏸ Pause 5m" Style="{StaticResource SecondaryButton}" Height="32" Padding="10,4" Margin="0,0,8,0" Click="PauseResume_Click" />
+                            <Button Content="🔒 Lock All" Style="{StaticResource PrimaryButton}" Height="32" Padding="10,4" Margin="0,0,16,0" Click="LockAll_Click" />
 
-                            <TextBlock Text="Protect New Application" FontWeight="SemiBold" FontSize="14" Foreground="#F8FAFC" Margin="0,0,0,12" />
+                            <!-- Window Controls (Minimize / Maximize / Close) -->
+                            <Button Width="32" Height="32" Style="{StaticResource SecondaryButton}" Content="─" FontSize="11" Padding="0" Margin="0,0,4,0" Click="Minimize_Click" ToolTip="Minimize" />
+                            <Button Width="32" Height="32" Style="{StaticResource SecondaryButton}" Content="☐" FontSize="11" Padding="0" Margin="0,0,4,0" Click="Maximize_Click" ToolTip="Maximize" />
+                            <Button Width="32" Height="32" Style="{StaticResource DangerButton}" Content="✕" FontSize="12" Padding="0" Click="Close_Click" ToolTip="Close" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-                            <Grid Grid.Row="1">
+                <!-- Dynamic Page Title Banner -->
+                <Border Grid.Row="1" Padding="24,6,24,16">
+                    <StackPanel>
+                        <TextBlock x:Name="PageTitleText" Text="Locked Apps" FontSize="26" FontWeight="Bold" Foreground="#0F172A" />
+                        <TextBlock x:Name="PageSubtitleText" Text="Manage protected applications, session durations, and instant lock rules." FontSize="13" Foreground="#64748B" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Active View Content -->
+                <Grid Grid.Row="2" Margin="24,0,24,16">
+
+                    <!-- ================= TAB 1: LOCKED APPS VIEW ================= -->
+                    <Grid x:Name="AppsView" Visibility="Visible">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Add Application Card -->
+                        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="Protect New Application" FontWeight="SemiBold" FontSize="14" Foreground="#0F172A" Margin="0,0,0,12" />
+
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="1.5*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Process Picker -->
+                                    <ComboBox x:Name="ProcessPickerCombo"
+                                              Grid.Column="0"
+                                              Height="38"
+                                              Margin="0,0,8,0"
+                                              VerticalContentAlignment="Center"
+                                              DropDownOpened="ProcessPicker_DropDownOpened" />
+
+                                    <!-- Browse Button -->
+                                    <Button Grid.Column="1" Content="📁 Browse .exe" Style="{StaticResource SecondaryButton}" Height="38" Margin="0,0,8,0" Click="BrowseExe_Click" />
+
+                                    <!-- Session Mode -->
+                                    <ComboBox x:Name="SessionModeCombo"
+                                              Grid.Column="2"
+                                              Height="38"
+                                              Margin="0,0,8,0"
+                                              VerticalContentAlignment="Center"
+                                              SelectedIndex="2">
+                                        <ComboBoxItem Content="Lock Immediately" />
+                                        <ComboBoxItem Content="1 Minute Session" />
+                                        <ComboBoxItem Content="5 Minutes Session" />
+                                        <ComboBoxItem Content="15 Minutes Session" />
+                                        <ComboBoxItem Content="30 Minutes Session" />
+                                        <ComboBoxItem Content="Focus Mode (Lock on blur)" />
+                                        <ComboBoxItem Content="Indefinite (Until closed)" />
+                                    </ComboBox>
+
+                                    <!-- Add Button -->
+                                    <Button Grid.Column="3" Content="+ Protect App" Style="{StaticResource PrimaryButton}" Height="38" Click="AddApp_Click" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Protected Apps List -->
+                        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="18">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBlock Text="Guarded Applications" FontWeight="SemiBold" FontSize="14" Foreground="#0F172A" />
+                                    <TextBlock x:Name="AppsCountText" Text="(0 guarded)" FontSize="12" Foreground="#64748B" Margin="8,2,0,0" />
+                                </StackPanel>
+
+                                <!-- Apps Container -->
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel x:Name="AppsContainer" />
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- ================= TAB 2: AUTHENTICATION VIEW ================= -->
+                    <Grid x:Name="SecurityView" Visibility="Collapsed">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+
+                                <!-- System Security Scan Card -->
+                                <Border Background="#FFFFFF" BorderBrush="#BFDBFE" BorderThickness="1.5" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="Hardware Biometrics &amp; Security Scan" FontSize="16" FontWeight="SemiBold" Foreground="#0F172A" />
+                                                <TextBlock Text="Automatic security capability detection for this PC" FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" x:Name="ScanBadge" CornerRadius="12" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" Padding="10,4">
+                                                <TextBlock x:Name="ScanBadgeText" Text="✓ Windows Hello Ready" FontSize="11" FontWeight="SemiBold" Foreground="#15803D" />
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Hardware Detection Result Banner -->
+                                        <Border x:Name="ScanResultBanner" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                    <TextBlock Text="Hardware Biometrics: " FontSize="13" Foreground="#64748B" />
+                                                    <TextBlock x:Name="WindowsHelloStatusText" Text="Scanning..." FontSize="13" FontWeight="Bold" Foreground="#0284C7" />
+                                                </StackPanel>
+                                                <TextBlock x:Name="ScanExplanationText" Text="Your PC supports Windows Hello. Windows Hello will be used as the primary unlock security." FontSize="11" Foreground="#475569" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Lock Method Options -->
+                                        <TextBlock Text="Active Unlock Method:" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,8" />
+                                        <StackPanel Margin="0,0,0,14">
+                                            <RadioButton x:Name="RadioHello" GroupName="LockMethodGroup" IsChecked="True" Margin="0,0,0,8" Checked="LockMethod_Changed">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="👤 Windows Hello (Recommended)" FontWeight="SemiBold" Foreground="#0F172A" FontSize="13" />
+                                                    <TextBlock Text=" — Facial recognition, fingerprint, or Windows PIN" Foreground="#64748B" FontSize="11" Margin="6,2,0,0" />
+                                                </StackPanel>
+                                            </RadioButton>
+                                            <RadioButton x:Name="RadioPin" GroupName="LockMethodGroup" Margin="0,0,0,8" Checked="LockMethod_Changed">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="🔑 Master PIN" FontWeight="SemiBold" Foreground="#0F172A" FontSize="13" />
+                                                    <TextBlock Text=" — Dedicated local PBKDF2 PIN (DPAPI encrypted)" Foreground="#64748B" FontSize="11" Margin="6,2,0,0" />
+                                                </StackPanel>
+                                            </RadioButton>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Test Windows Hello Prompt" Style="{StaticResource PrimaryButton}" Height="34" Margin="0,0,8,0" Click="TestHello_Click" />
+                                            <Button Content="Re-Scan System" Style="{StaticResource SecondaryButton}" Height="34" Click="RescanSystem_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Master PIN Configuration Card -->
+                                <Border x:Name="PinConfigCard" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Master PIN Credentials" FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,4" />
+                                        <TextBlock Text="Used if Master PIN mode is chosen or as an alternate unlock method." FontSize="12" Foreground="#64748B" Margin="0,0,0,14" />
+
+                                        <TextBlock Text="New PIN (4-12 digits):" FontSize="12" Foreground="#475569" Margin="0,0,0,6" />
+                                        <PasswordBox x:Name="NewPinBox" Height="36" Background="#F8FAFC" Foreground="#0F172A" BorderBrush="#CBD5E1" Margin="0,0,0,10" VerticalContentAlignment="Center" Padding="8,4" />
+
+                                        <TextBlock Text="Confirm New PIN:" FontSize="12" Foreground="#475569" Margin="0,0,0,6" />
+                                        <PasswordBox x:Name="ConfirmPinBox" Height="36" Background="#F8FAFC" Foreground="#0F172A" BorderBrush="#CBD5E1" Margin="0,0,0,14" VerticalContentAlignment="Center" Padding="8,4" />
+
+                                        <TextBlock x:Name="PinStatusMessage" Text="" FontSize="12" FontWeight="Medium" Foreground="#10B981" Margin="0,0,0,10" />
+
+                                        <Button Content="Set Master PIN" Style="{StaticResource SecondaryButton}" Height="34" HorizontalAlignment="Left" Click="SavePin_Click" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Multi-Face Enrollment Profiles Card (FaceGate-Mac parity) -->
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="Multi-Face Profiles &amp; Camera Hardware" FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" />
+                                                <TextBlock Text="Manage multi-appearance enrollment (up to 3 faces) and external webcam source." FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="🎥 Windows Biometrics Setup" Style="{StaticResource SecondaryButton}" Height="30" Padding="10,2" Click="OpenWindowsHelloSettings_Click" />
+                                        </Grid>
+
+                                        <!-- Preferred Camera Selection -->
+                                        <TextBlock Text="Biometric Camera Source:" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,8,0,6" />
+                                        <Grid Margin="0,0,0,14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <ComboBox x:Name="CameraPickerCombo" Height="36" Style="{StaticResource ModernComboBoxStyle}" SelectionChanged="CameraPickerCombo_SelectionChanged" />
+                                            <Button Grid.Column="1" Content="🔄 Refresh Cameras" Style="{StaticResource SecondaryButton}" Height="36" Margin="8,0,0,0" Padding="10,4" Click="RefreshCameras_Click" />
+                                        </Grid>
+
+                                        <!-- Face Profile Slots -->
+                                        <TextBlock Text="Enrolled Face Slots:" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,4,0,8" />
+                                        <StackPanel x:Name="FaceProfilesContainer" Margin="0,0,0,8" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Cryptography Architecture Card -->
+                                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16">
+                                    <StackPanel>
+                                        <TextBlock Text="Security Standards &amp; Hardware Encryption" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,6" />
+                                        <TextBlock Text="• Windows Hello: Authenticates against TPM hardware credentials" FontSize="11" Foreground="#64748B" Margin="0,2" />
+                                        <TextBlock Text="• Master PIN KDF: PBKDF2-HMAC-SHA-256 with 600,000 iterations" FontSize="11" Foreground="#64748B" Margin="0,2" />
+                                        <TextBlock Text="• Secret Storage: Encrypted via Windows DPAPI (pin.dat)" FontSize="11" Foreground="#64748B" Margin="0,2" />
+                                        <TextBlock Text="• Anti-Tamper: Monotonic TimeProvider (prevents clock manipulation)" FontSize="11" Foreground="#64748B" Margin="0,2" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- ================= TAB 3: BEHAVIOR / SETTINGS VIEW ================= -->
+                    <Grid x:Name="SettingsView" Visibility="Collapsed">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+
+                                <!-- Card 1: Uninstall Protection -->
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Uninstall Protection" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,12" />
+
+                                        <CheckBox x:Name="AppDeletionProtectionCheck" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True" Margin="0,0,0,8">
+                                            <TextBlock Text="App Deletion Protection (highly recommended)" FontSize="13" FontWeight="Medium" Foreground="#0F172A" />
+                                        </CheckBox>
+
+                                        <TextBlock Text="Changing this setting requires administrator authentication. When enabled, LockGate is protected from deletion to safeguard your locked applications."
+                                                   FontSize="11" Foreground="#64748B" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Card 2: Locking -->
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Locking" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,14" />
+
+                                        <!-- Session Timeout Slider with Realtime Readout -->
+                                        <Grid Margin="0,0,0,8">
+                                            <TextBlock Text="Session Timeout" FontSize="13" FontWeight="Medium" Foreground="#0F172A" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="SessionTimeoutValueText" Text="5 min" FontSize="13" FontWeight="Bold" Foreground="#2563EB" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <Slider x:Name="SessionTimeoutSlider"
+                                                Style="{StaticResource ModernSliderStyle}"
+                                                Minimum="0" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="5"
+                                                Margin="0,0,0,12"
+                                                ValueChanged="SessionTimeoutSlider_ValueChanged" />
+
+                                        <TextBlock Text="After unlocking an app, it stays unlocked for this duration before re-locking. Set to 0 to lock immediately after use, or set to 30 to keep unlocked until you manually lock."
+                                                   FontSize="11" Foreground="#64748B" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+                                        <!-- Hidden / Synced dropdown for config compatibility -->
+                                        <ComboBox x:Name="DefaultSessionCombo" Visibility="Collapsed">
+                                            <ComboBoxItem Content="Lock Immediately" />
+                                            <ComboBoxItem Content="1 Minute" />
+                                            <ComboBoxItem Content="5 Minutes (Default)" />
+                                            <ComboBoxItem Content="15 Minutes" />
+                                            <ComboBoxItem Content="30 Minutes" />
+                                            <ComboBoxItem Content="Keep Unlocked" />
+                                        </ComboBox>
+
+                                        <Border Height="1" Background="#E2E8F0" Margin="0,0,0,14" />
+
+                                        <!-- Lock when PC sleeps toggle switch -->
+                                        <CheckBox x:Name="LockOnWindowsLockCheck" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True" Margin="0,0,0,14">
+                                            <TextBlock Text="Lock all apps when PC sleeps or locks" FontSize="13" Foreground="#0F172A" />
+                                        </CheckBox>
+
+                                        <!-- Schedules -->
+                                        <StackPanel Margin="0,0,0,8">
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox x:Name="ScheduleLockCheck" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center">
+                                                    <TextBlock Text="Lock all apps between" FontSize="13" Foreground="#0F172A" />
+                                                </CheckBox>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="10,4">
+                                                        <TextBlock Text="10:00 PM" FontSize="12" Foreground="#334155" />
+                                                    </Border>
+                                                    <TextBlock Text="–" Foreground="#64748B" Margin="6,4" VerticalAlignment="Center" />
+                                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="10,4">
+                                                        <TextBlock Text="7:00 AM" FontSize="12" Foreground="#334155" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <Grid Margin="0,4,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox x:Name="ScheduleUnlockCheck" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center">
+                                                    <TextBlock Text="Unlock all apps between" FontSize="13" Foreground="#0F172A" />
+                                                </CheckBox>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="10,4">
+                                                        <TextBlock Text="7:00 AM" FontSize="12" Foreground="#334155" />
+                                                    </Border>
+                                                    <TextBlock Text="–" Foreground="#64748B" Margin="6,4" VerticalAlignment="Center" />
+                                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="10,4">
+                                                        <TextBlock Text="10:00 PM" FontSize="12" Foreground="#334155" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Card 3: Face Unlock Schedule -->
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Face Unlock Schedule" FontSize="14" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,12" />
+
+                                        <CheckBox x:Name="DisableFaceScheduleCheck" Style="{StaticResource ToggleSwitchStyle}">
+                                            <TextBlock Text="Disable Face Unlock during certain hours" FontSize="13" Foreground="#0F172A" />
+                                        </CheckBox>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Card 4: System Tray & Save -->
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <CheckBox x:Name="MinimizeToTrayCheck" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True" Margin="0,0,0,16">
+                                            <TextBlock Text="Minimize to System Tray when window is closed (keeps LockGate running)" Foreground="#0F172A" FontSize="13" />
+                                        </CheckBox>
+
+                                        <Button Content="Save Settings" Style="{StaticResource PrimaryButton}" Height="36" HorizontalAlignment="Left" Click="SaveSettings_Click" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- ================= TAB: AUDIT LOGS VIEW ================= -->
+                    <Grid x:Name="AuditLogsView" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header card with controls -->
+                        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,16">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="1.5*" />
+                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Process Picker -->
-                                <ComboBox x:Name="ProcessPickerCombo"
-                                          Grid.Column="0"
-                                          Height="38"
-                                          Margin="0,0,8,0"
-                                          VerticalContentAlignment="Center"
-                                          Background="#0D1322"
-                                          Foreground="#F8FAFC"
-                                          BorderBrush="#22304A"
-                                          DropDownOpened="ProcessPicker_DropDownOpened" />
-
-                                <!-- Browse Button -->
-                                <Button Grid.Column="1" Content="📁 Browse .exe" Style="{StaticResource SecondaryButton}" Height="38" Margin="0,0,8,0" Click="BrowseExe_Click" />
-
-                                <!-- Session Mode -->
-                                <ComboBox x:Name="SessionModeCombo"
-                                          Grid.Column="2"
-                                          Height="38"
-                                          Margin="0,0,8,0"
-                                          VerticalContentAlignment="Center"
-                                          Background="#0D1322"
-                                          Foreground="#F8FAFC"
-                                          BorderBrush="#22304A"
-                                          SelectedIndex="2">
-                                    <ComboBoxItem Content="Lock Immediately" />
-                                    <ComboBoxItem Content="1 Minute Session" />
-                                    <ComboBoxItem Content="5 Minutes Session" />
-                                    <ComboBoxItem Content="15 Minutes Session" />
-                                    <ComboBoxItem Content="30 Minutes Session" />
-                                    <ComboBoxItem Content="Focus Mode (Lock on blur)" />
-                                    <ComboBoxItem Content="Indefinite (Until closed)" />
-                                </ComboBox>
-
-                                <!-- Add Button -->
-                                <Button Grid.Column="3" Content="+ Protect App" Style="{StaticResource PrimaryButton}" Height="38" Click="AddApp_Click" />
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <!-- Protected Apps List -->
-                    <Border Grid.Row="1" Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="18">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="Guarded Applications" FontWeight="SemiBold" FontSize="14" Foreground="#F8FAFC" />
-                                <TextBlock x:Name="AppsCountText" Text="(0 guarded)" FontSize="12" Foreground="#94A3B8" Margin="8,2,0,0" />
-                            </StackPanel>
-
-                            <!-- Apps Container -->
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                <StackPanel x:Name="AppsContainer" />
-                            </ScrollViewer>
-                        </Grid>
-                    </Border>
-                </Grid>
-
-                <!-- ================= TAB 2: AUTHENTICATION VIEW ================= -->
-                <Grid x:Name="SecurityView" Visibility="Collapsed">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel MaxWidth="680" HorizontalAlignment="Left">
-
-                            <!-- System Security Scan Card -->
-                            <Border Background="#131C2E" BorderBrush="#2563EB" BorderThickness="1.5" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <Grid Margin="0,0,0,12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel>
-                                            <TextBlock Text="Hardware Biometrics &amp; Security Scan" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF" />
-                                            <TextBlock Text="Automatic security capability detection for this PC" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" />
-                                        </StackPanel>
-                                        <Border Grid.Column="1" x:Name="ScanBadge" CornerRadius="12" Background="#064E3B" BorderBrush="#059669" BorderThickness="1" Padding="10,4">
-                                            <TextBlock x:Name="ScanBadgeText" Text="✓ Windows Hello Ready" FontSize="11" FontWeight="SemiBold" Foreground="#34D399" />
-                                        </Border>
-                                    </Grid>
-
-                                    <!-- Hardware Detection Result Banner -->
-                                    <Border x:Name="ScanResultBanner" Background="#0D1322" BorderBrush="#22304A" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
-                                        <StackPanel>
-                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                                <TextBlock Text="Hardware Biometrics: " FontSize="13" Foreground="#94A3B8" />
-                                                <TextBlock x:Name="WindowsHelloStatusText" Text="Scanning..." FontSize="13" FontWeight="Bold" Foreground="#38BDF8" />
-                                            </StackPanel>
-                                            <TextBlock x:Name="ScanExplanationText" Text="Your PC supports Windows Hello. Windows Hello will be used as the primary unlock security." FontSize="11" Foreground="#CBD5E1" />
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Lock Method Options -->
-                                    <TextBlock Text="Active Unlock Method:" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,8" />
-                                    <StackPanel Margin="0,0,0,14">
-                                        <RadioButton x:Name="RadioHello" GroupName="LockMethodGroup" IsChecked="True" Margin="0,0,0,8" Checked="LockMethod_Changed">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="👤 Windows Hello (Recommended)" FontWeight="SemiBold" Foreground="#F8FAFC" FontSize="13" />
-                                                <TextBlock Text=" — Facial recognition, fingerprint, or Windows PIN" Foreground="#94A3B8" FontSize="11" Margin="6,2,0,0" />
-                                            </StackPanel>
-                                        </RadioButton>
-                                        <RadioButton x:Name="RadioPin" GroupName="LockMethodGroup" Margin="0,0,0,8" Checked="LockMethod_Changed">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="🔑 Master PIN" FontWeight="SemiBold" Foreground="#F8FAFC" FontSize="13" />
-                                                <TextBlock Text=" — Dedicated local PBKDF2 PIN (DPAPI encrypted)" Foreground="#94A3B8" FontSize="11" Margin="6,2,0,0" />
-                                            </StackPanel>
-                                        </RadioButton>
-                                    </StackPanel>
-
+                                <StackPanel VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Content="Test Windows Hello Prompt" Style="{StaticResource PrimaryButton}" Height="34" Margin="0,0,8,0" Click="TestHello_Click" />
-                                        <Button Content="Re-Scan System" Style="{StaticResource SecondaryButton}" Height="34" Click="RescanSystem_Click" />
+                                        <TextBlock Text="Security Event History" FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" />
+                                        <TextBlock x:Name="AuditLogsCountText" Text="(0 records)" FontSize="12" Foreground="#64748B" Margin="8,2,0,0" VerticalAlignment="Center" />
                                     </StackPanel>
+                                    <TextBlock Text="Chronological stream of authorization checks, lockouts, and intruder snapshot captures." FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
                                 </StackPanel>
-                            </Border>
 
-                            <!-- Master PIN Configuration Card -->
-                            <Border x:Name="PinConfigCard" Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="Master PIN Credentials" FontSize="15" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4" />
-                                    <TextBlock Text="Used if Master PIN mode is chosen or as an alternate unlock method." FontSize="12" Foreground="#94A3B8" Margin="0,0,0,14" />
-
-                                    <TextBlock Text="New PIN (4-12 digits):" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,6" />
-                                    <PasswordBox x:Name="NewPinBox" Height="36" Background="#0D1322" Foreground="#FFFFFF" BorderBrush="#22304A" Margin="0,0,0,10" VerticalContentAlignment="Center" Padding="8,4" />
-
-                                    <TextBlock Text="Confirm New PIN:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,6" />
-                                    <PasswordBox x:Name="ConfirmPinBox" Height="36" Background="#0D1322" Foreground="#FFFFFF" BorderBrush="#22304A" Margin="0,0,0,14" VerticalContentAlignment="Center" Padding="8,4" />
-
-                                    <TextBlock x:Name="PinStatusMessage" Text="" FontSize="12" FontWeight="Medium" Foreground="#10B981" Margin="0,0,0,10" />
-
-                                    <Button Content="Set Master PIN" Style="{StaticResource SecondaryButton}" Height="34" HorizontalAlignment="Left" Click="SavePin_Click" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="📸 Open Snapshots" Style="{StaticResource SecondaryButton}" Height="32" Margin="0,0,8,0" Padding="12,4" Click="OpenSnapshotsFolder_Click" />
+                                    <Button Content="🔄 Refresh" Style="{StaticResource PrimaryButton}" Height="32" Padding="12,4" Click="RefreshAuditLogs_Click" />
                                 </StackPanel>
-                            </Border>
+                            </Grid>
+                        </Border>
 
-                            <!-- Multi-Face Enrollment Profiles Card (FaceGate-Mac parity) -->
-                            <Border Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <Grid Margin="0,0,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel>
-                                            <TextBlock Text="Multi-Face Profiles &amp; Camera Hardware" FontSize="15" FontWeight="SemiBold" Foreground="#FFFFFF" />
-                                            <TextBlock Text="Manage multi-appearance enrollment (up to 3 faces) and external webcam source." FontSize="12" Foreground="#94A3B8" Margin="0,2,0,0" />
-                                        </StackPanel>
-                                        <Button Grid.Column="1" Content="🎥 Windows Biometrics Setup" Style="{StaticResource SecondaryButton}" Height="30" Padding="10,2" Click="OpenWindowsHelloSettings_Click" />
-                                    </Grid>
+                        <!-- Scrollable Log List -->
+                        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="12">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel x:Name="AuditLogsContainer" />
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
 
-                                    <!-- Preferred Camera Selection -->
-                                    <TextBlock Text="Biometric Camera Source:" FontSize="12" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,8,0,6" />
-                                    <Grid Margin="0,0,0,14">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox x:Name="CameraPickerCombo" Height="36" Style="{StaticResource ModernComboBoxStyle}" SelectionChanged="CameraPickerCombo_SelectionChanged" />
-                                        <Button Grid.Column="1" Content="🔄 Refresh Cameras" Style="{StaticResource SecondaryButton}" Height="36" Margin="8,0,0,0" Padding="10,4" Click="RefreshCameras_Click" />
-                                    </Grid>
-
-                                    <!-- Face Profile Slots -->
-                                    <TextBlock Text="Enrolled Face Slots:" FontSize="12" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,4,0,8" />
-                                    <StackPanel x:Name="FaceProfilesContainer" Margin="0,0,0,8" />
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Cryptography Architecture Card -->
-                            <Border Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="16">
-                                <StackPanel>
-                                    <TextBlock Text="Security Standards &amp; Hardware Encryption" FontSize="13" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,6" />
-                                    <TextBlock Text="• Windows Hello: Authenticates against TPM hardware credentials" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
-                                    <TextBlock Text="• Master PIN KDF: PBKDF2-HMAC-SHA-256 with 600,000 iterations" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
-                                    <TextBlock Text="• Secret Storage: Encrypted via Windows DPAPI (pin.dat)" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
-                                    <TextBlock Text="• Anti-Tamper: Monotonic TimeProvider (prevents clock manipulation)" FontSize="11" Foreground="#94A3B8" Margin="0,2" />
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-
-                <!-- ================= TAB 3: BEHAVIOR / SETTINGS VIEW ================= -->
-                <!-- Exactly styled after the user's reference screenshot! -->
-                <Grid x:Name="SettingsView" Visibility="Collapsed">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel MaxWidth="680" HorizontalAlignment="Left">
-
-                            <!-- Card 1: Uninstall Protection -->
-                            <Border Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="Uninstall Protection" FontSize="14" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,12" />
-
-                                    <CheckBox x:Name="AppDeletionProtectionCheck" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True" Margin="0,0,0,8">
-                                        <TextBlock Text="App Deletion Protection (highly recommended)" FontSize="13" FontWeight="Medium" Foreground="#F8FAFC" />
-                                    </CheckBox>
-
-                                    <TextBlock Text="Changing this setting requires administrator authentication. When enabled, LockGate is protected from deletion to safeguard your locked applications."
-                                               FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="0,4,0,0" />
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Card 2: Locking -->
-                            <Border Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="Locking" FontSize="14" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,14" />
-
-                                    <!-- Session Timeout Slider with Realtime Readout -->
-                                    <Grid Margin="0,0,0,8">
-                                        <TextBlock Text="Session Timeout" FontSize="13" FontWeight="Medium" Foreground="#F8FAFC" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="SessionTimeoutValueText" Text="5 min" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                                    </Grid>
-
-                                    <Slider x:Name="SessionTimeoutSlider"
-                                            Style="{StaticResource ModernSliderStyle}"
-                                            Minimum="0" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
-                                            Value="5"
-                                            Margin="0,0,0,12"
-                                            ValueChanged="SessionTimeoutSlider_ValueChanged" />
-
-                                    <TextBlock Text="After unlocking an app, it stays unlocked for this duration before re-locking. Set to 0 to lock immediately after use, or set to 31 to keep unlocked until you manually lock."
-                                               FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="0,0,0,16" />
-
-                                    <!-- Hidden / Synced dropdown for config compatibility -->
-                                    <ComboBox x:Name="DefaultSessionCombo" Visibility="Collapsed">
-                                        <ComboBoxItem Content="Lock Immediately" />
-                                        <ComboBoxItem Content="1 Minute" />
-                                        <ComboBoxItem Content="5 Minutes (Default)" />
-                                        <ComboBoxItem Content="15 Minutes" />
-                                        <ComboBoxItem Content="30 Minutes" />
-                                        <ComboBoxItem Content="Keep Unlocked" />
-                                    </ComboBox>
-
-                                    <Border Height="1" Background="#1F293D" Margin="0,0,0,14" />
-
-                                    <!-- Lock when Mac/Windows sleeps toggle switch -->
-                                    <CheckBox x:Name="LockOnWindowsLockCheck" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True" Margin="0,0,0,14">
-                                        <TextBlock Text="Lock all apps when PC sleeps or locks" FontSize="13" Foreground="#F8FAFC" />
-                                    </CheckBox>
-
-                                    <!-- Schedules -->
-                                    <StackPanel Margin="0,0,0,8">
-                                        <Grid Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox x:Name="ScheduleLockCheck" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center">
-                                                <TextBlock Text="Lock all apps between" FontSize="13" Foreground="#F8FAFC" />
-                                            </CheckBox>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                                <Border Background="#0D1322" BorderBrush="#22304A" BorderThickness="1" CornerRadius="6" Padding="10,4">
-                                                    <TextBlock Text="10:00 PM" FontSize="12" Foreground="#CBD5E1" />
-                                                </Border>
-                                                <TextBlock Text="–" Foreground="#64748B" Margin="6,4" VerticalAlignment="Center" />
-                                                <Border Background="#0D1322" BorderBrush="#22304A" BorderThickness="1" CornerRadius="6" Padding="10,4">
-                                                    <TextBlock Text="7:00 AM" FontSize="12" Foreground="#CBD5E1" />
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
-
-                                        <Grid Margin="0,4,0,0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox x:Name="ScheduleUnlockCheck" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center">
-                                                <TextBlock Text="Unlock all apps between" FontSize="13" Foreground="#F8FAFC" />
-                                            </CheckBox>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                                <Border Background="#0D1322" BorderBrush="#22304A" BorderThickness="1" CornerRadius="6" Padding="10,4">
-                                                    <TextBlock Text="7:00 AM" FontSize="12" Foreground="#CBD5E1" />
-                                                </Border>
-                                                <TextBlock Text="–" Foreground="#64748B" Margin="6,4" VerticalAlignment="Center" />
-                                                <Border Background="#0D1322" BorderBrush="#22304A" BorderThickness="1" CornerRadius="6" Padding="10,4">
-                                                    <TextBlock Text="10:00 PM" FontSize="12" Foreground="#CBD5E1" />
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Card 3: Face Unlock Schedule -->
-                            <Border Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <TextBlock Text="Face Unlock Schedule" FontSize="14" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,12" />
-
-                                    <CheckBox x:Name="DisableFaceScheduleCheck" Style="{StaticResource ToggleSwitchStyle}">
-                                        <TextBlock Text="Disable Face Unlock during certain hours" FontSize="13" Foreground="#F8FAFC" />
-                                    </CheckBox>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Card 4: System Tray & Save -->
-                            <Border Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <CheckBox x:Name="MinimizeToTrayCheck" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True" Margin="0,0,0,16">
-                                        <TextBlock Text="Minimize to System Tray when window is closed (keeps LockGate running)" Foreground="#F8FAFC" FontSize="13" />
-                                    </CheckBox>
-
-                                    <Button Content="Save Settings" Style="{StaticResource PrimaryButton}" Height="36" HorizontalAlignment="Left" Click="SaveSettings_Click" />
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-
-                <!-- ================= TAB: AUDIT LOGS VIEW ================= -->
-                <Grid x:Name="AuditLogsView" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <!-- Header card with controls -->
-                    <Border Grid.Row="0" Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,16">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Security Event History" FontSize="15" FontWeight="SemiBold" Foreground="#F8FAFC" />
-                                    <TextBlock x:Name="AuditLogsCountText" Text="(0 records)" FontSize="12" Foreground="#94A3B8" Margin="8,2,0,0" VerticalAlignment="Center" />
-                                </StackPanel>
-                                <TextBlock Text="Chronological stream of authorization checks, lockouts, and intruder snapshot captures." FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Content="📸 Open Snapshots" Style="{StaticResource SecondaryButton}" Height="32" Margin="0,0,8,0" Padding="12,4" Click="OpenSnapshotsFolder_Click" />
-                                <Button Content="🔄 Refresh" Style="{StaticResource PrimaryButton}" Height="32" Padding="12,4" Click="RefreshAuditLogs_Click" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Scrollable Log List -->
-                    <Border Grid.Row="1" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" Padding="12">
+                    <!-- ================= TAB 4: ABOUT VIEW ================= -->
+                    <Grid x:Name="AboutView" Visibility="Collapsed">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel x:Name="AuditLogsContainer" />
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
-
-                <!-- ================= TAB 4: ABOUT VIEW ================= -->
-                <Grid x:Name="AboutView" Visibility="Collapsed">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel MaxWidth="680" HorizontalAlignment="Left">
-                            <Border Background="#131C2E" BorderBrush="#22304A" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
-                                <StackPanel>
-                                    <Border CornerRadius="12" ClipToBounds="True" Margin="0,0,0,16" Background="#0D1322" BorderBrush="#22304A" BorderThickness="1">
-                                        <Image Source="/LockGate.App;component/Assets/logo_full.png" MaxHeight="180" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
-                                    </Border>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                        <Border Width="40" Height="40" CornerRadius="10" Background="#131C2E" BorderBrush="#2563EB" BorderThickness="1.5" Margin="0,0,12,0">
-                                            <Image Source="/LockGate.App;component/Assets/logo_symbol.png" Width="28" Height="28" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+                                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <Border CornerRadius="12" ClipToBounds="True" Margin="0,0,0,16" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1">
+                                            <Image Source="/LockGate.App;component/Assets/logo_full.png" MaxHeight="180" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
                                         </Border>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="LockGate for Windows" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" />
-                                            <TextBlock Text="Version 1.0.0 (Native Release)" FontSize="12" Foreground="#94A3B8" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                            <Border Width="40" Height="40" CornerRadius="10" Background="#EFF6FF" BorderBrush="#2563EB" BorderThickness="1.5" Margin="0,0,12,0">
+                                                <Image Source="/LockGate.App;component/Assets/logo_symbol.png" Width="28" Height="28" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="LockGate for Windows" FontSize="18" FontWeight="Bold" Foreground="#0F172A" />
+                                                <TextBlock Text="Version 1.0.0 (Native Release)" FontSize="12" Foreground="#64748B" />
+                                            </StackPanel>
                                         </StackPanel>
+
+                                        <TextBlock Text="LockGate is a native biometric security layer designed for Windows 11 and Windows 10. It integrates seamlessly with Windows Hello biometrics (facial recognition, fingerprint scanners) and hardware TPMs to protect sensitive desktop applications."
+                                                   FontSize="12" Foreground="#475569" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+                                        <Border Height="1" Background="#E2E8F0" Margin="0,0,0,16" />
+
+                                        <TextBlock Text="Key System Features:" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A" Margin="0,0,0,8" />
+                                        <TextBlock Text="• Windows Hello Biometric Verification (Windows.Security.Credentials.UI)" FontSize="12" Foreground="#64748B" Margin="0,2" />
+                                        <TextBlock Text="• Low-level Win32 Foreground Process Interception Engine" FontSize="12" Foreground="#64748B" Margin="0,2" />
+                                        <TextBlock Text="• Master PIN Encrypted via Windows DPAPI (Data Protection API)" FontSize="12" Foreground="#64748B" Margin="0,2" />
+                                        <TextBlock Text="• Anti-Bypass Monotonic TimeProvider Engine" FontSize="12" Foreground="#64748B" Margin="0,2" />
+                                        <TextBlock Text="• System Tray Guard &amp; Session Auto-Expiry" FontSize="12" Foreground="#64748B" Margin="0,2" />
                                     </StackPanel>
-
-                                    <TextBlock Text="LockGate is a native biometric security layer designed for Windows 11 and Windows 10. It integrates seamlessly with Windows Hello biometrics (facial recognition, fingerprint scanners) and hardware TPMs to protect sensitive desktop applications."
-                                               FontSize="12" Foreground="#CBD5E1" TextWrapping="Wrap" Margin="0,0,0,16" />
-
-                                    <Border Height="1" Background="#1F293D" Margin="0,0,0,16" />
-
-                                    <TextBlock Text="Key System Features:" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,8" />
-                                    <TextBlock Text="• Windows Hello Biometric Verification (Windows.Security.Credentials.UI)" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                    <TextBlock Text="• Low-level Win32 Foreground Process Interception Engine" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                    <TextBlock Text="• Master PIN Encrypted via Windows DPAPI (Data Protection API)" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                    <TextBlock Text="• Anti-Bypass Monotonic TimeProvider Engine" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                    <TextBlock Text="• System Tray Guard &amp; Session Auto-Expiry" FontSize="12" Foreground="#94A3B8" Margin="0,2" />
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
                 </Grid>
+
+                <!-- Bottom Status Bar -->
+                <Border Grid.Row="3" Background="#EAEFF6" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="24,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="FooterInfoText" Text="LockGate Active • Monitoring foreground processes • System Tray enabled" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="v1.0.0 (Windows Native)" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
             </Grid>
-
-            <!-- Bottom Status Bar -->
-            <Border Grid.Row="3" Background="#060A14" BorderBrush="#1A2438" BorderThickness="0,1,0,0" Padding="24,8">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="FooterInfoText" Text="LockGate Active • Monitoring foreground processes • System Tray enabled" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1" Text="v1.0.0 (Windows Native)" FontSize="11" Foreground="#475569" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
         </Grid>
-    </Grid>
+    </Border>
 </Window>
