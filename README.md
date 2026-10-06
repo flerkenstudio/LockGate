@@ -1,32 +1,45 @@
-# FaceGate for Windows
+﻿# LockGate for Windows
 
-Windows-native application locker inspired by [FaceGate-Mac](https://github.com/dweep-desai/FaceGate-Mac).
-Reimplementation in C#/.NET, not a translation. See `WINDOWS_PORT_PLAN.md` for the full plan and `docs/WINDOWS_MAPPING.md` for the Mac→Windows mapping.
+LockGate is a Windows-native application locker designed to monitor and secure specific applications on your computer. Built with C# and .NET 8 (WPF), it acts as a user-mode locker by utilizing PIN verification, session timers, and a background watcher to protect designated apps.
 
-## Status — Milestone 1, step 1 (platform-neutral core)
+## :rocket: Features
+- **Application Locking**: Monitor specific Windows processes and require authentication to use them.
+- **PIN Authentication**: Secure PIN verifier with PBKDF2 hashing and throttling to prevent brute-force attacks.
+- **Session Timers**: Configurable locking engine to handle authenticated sessions.
+- **Background Protection**: Runs quietly in the system tray while monitoring protected apps.
+- **JSON Configuration**: Manage protected applications and settings easily.
 
-| Piece | State |
-|---|---|
-| `FaceGate.Core` — session timers, lock engine, protected-app registry | done, 43 tests passing |
-| `FaceGate.Core` — PIN verifier (PBKDF2), throttling, JSON config | done, tested |
-| Windows process watcher, auth window, tray (WinUI 3) | **next** — needs Windows to build |
-| Camera, face AI, Windows Hello, DPAPI storage | later phases |
+## :hammer_and_wrench: Architecture
+The solution is divided into modular components:
+- LockGate.Core: Platform-neutral core logic (session timers, lock engine, PIN verification, config).
+- LockGate.Infrastructure: Infrastructure logic for interacting with Windows services and process monitoring.
+- LockGate.App: The WPF-based Windows application, including the authentication window and system tray integration.
 
-Nothing here talks to a camera or handles biometric data yet.
+## :computer: Getting Started
 
-## Build & test
+### Prerequisites
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or higher.
+- Windows 10/11.
 
-```powershell
-dotnet build FaceGate.sln
-dotnet run --project tests/FaceGate.Core.Tests
-```
+### Build & Run
+To build the solution and run the application:
 
-The test project is a tiny dependency-free runner (written where NuGet was unreachable). On your machine, convert it to xunit if you prefer — the test bodies use plain assertions.
+`powershell
+# Restore dependencies and build the solution
+dotnet build
 
-## Security boundary
+# Run the WPF application
+dotnet run --project src/LockGate.App
+`
 
-An application locker, not a replacement for Windows sign-in, BitLocker or Windows Hello. A local administrator or malware can interfere with any user-mode locker. The PIN verifier is only as private as the storage it sits in (DPAPI/Credential Manager arrives in Phase 8), and a short PIN is weak against offline guessing regardless of the hash.
+### Running Tests
+The project includes a suite of tests to verify the core logic:
+`powershell
+dotnet test
+`
 
-## License / attribution
+## :warning: Security Boundary
+LockGate is an application locker and **not** a replacement for Windows sign-in, BitLocker, or Windows Hello. A local administrator or malware can bypass user-mode lockers. The PIN verifier provides basic application-level access control.
 
-No FaceGate-Mac source or assets are copied; behaviour was studied as a reference. Upstream is MIT-licensed — keep its notice if you later copy anything. Add your own `LICENSE` before publishing.
+## :scroll: License
+This project is open-source. Please add your own LICENSE file before distributing.
