@@ -38,10 +38,11 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -o publish/win-x64
 
-      - name: Setup Inno Setup
-        uses: sbsoftware/innosetup-action@v1.0.1
-        with:
-          version: '6.2.2'
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress
+          "C:\Program Files (x86)\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Compile Inno Setup Installer & Portable Zip
         shell: pwsh
