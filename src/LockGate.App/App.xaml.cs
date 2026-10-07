@@ -115,7 +115,7 @@ public partial class App : System.Windows.Application
         _trayIcon = new Forms.NotifyIcon
         {
             Icon = appIcon,
-            Text = "FaceGate - Application Locker",
+            Text = "LockGate - Application Locker",
             Visible = true
         };
 

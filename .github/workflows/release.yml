@@ -1,0 +1,79 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore LockGate.sln
+
+      - name: Run Tests
+        run: dotnet run --project tests/LockGate.Core.Tests -c Release
+
+      - name: Publish Win-x64 Self-Contained Binary
+        run: |
+          dotnet publish src/LockGate.App/LockGate.App.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o publish/win-x64
+
+      - name: Setup Inno Setup
+        uses: sbsoftware/innosetup-action@v1.0.1
+        with:
+          version: '6.2.2'
+
+      - name: Compile Inno Setup Installer & Portable Zip
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          if (-not $version -or $version -eq "${{ github.ref }}") { $version = "1.0.0" }
+          New-Item -ItemType Directory -Path release -Force
+
+          # Create Portable Zip
+          $portableDir = "release/LockGate-$version-portable"
+          New-Item -ItemType Directory -Path $portableDir -Force
+          Copy-Item "publish/win-x64/LockGate.exe" -Destination $portableDir
+          Copy-Item "README.md" -Destination $portableDir
+          Compress-Archive -Path "$portableDir/*" -DestinationPath "release/LockGate-v$version-windows-x64.zip" -Force
+
+          # Compile Setup Installer
+          iscc "/DMyAppVersion=$version" installer/LockGateSetup.iss
+
+          # Generate Checksums
+          Get-ChildItem -Path release -Filter "LockGate-*" | ForEach-Object {
+            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
+            "$hash  $($_.Name)"
+          } | Set-Content -Path release/checksums.txt -Encoding UTF8
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/LockGate-Setup-*.exe
+            release/LockGate-*-windows-x64.zip
+            release/checksums.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true

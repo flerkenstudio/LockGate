@@ -6,3 +6,5 @@ obj/
 # never commit biometric data or secrets
 *.encrypted
 face_data*
+publish/
+release/
