@@ -25,6 +25,24 @@ Built with C# and .NET 8 (WPF), LockGate acts as a user-mode locker by utilizing
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+  <h3>Locked Applications Management</h3>
+  <img src="docs/screenshots/locked_apps.png" alt="Locked Apps" width="800" />
+  <br /><br />
+
+  <h3>Windows Hello & Biometric Profiles</h3>
+  <img src="docs/screenshots/authentication.png" alt="Authentication Settings" width="800" />
+  <br /><br />
+
+  <h3>About & System Specifications</h3>
+  <img src="docs/screenshots/about.png" alt="About LockGate" width="800" />
+</div>
+
+
+---
+
 ## 🏗️ Architecture
 The solution is divided into clean, modular components:
 * LockGate.Core: Platform-neutral core logic (session timers, lock engine, PIN verification, config).
